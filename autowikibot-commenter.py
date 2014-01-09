@@ -224,6 +224,8 @@ while True:
 	  wisoup = BeautifulSoup(wi_api_data)
 	  image_url = wisoup.ii['thumburl']
 	  image_source_url = wisoup.ii['descriptionurl']
+	  image_source_url = re.sub(r'\)','\)',image_source_url)
+	  image_source_url = re.sub(r'\(','\(',image_source_url)
 	  global image_source_markdown
 	  image_source_markdown = ("[^(image source)]("+image_source_url+") ^| ")
 	  
@@ -245,7 +247,6 @@ while True:
 	  except:
 	    caption_markdown = ""
 	    #warn("No caption")
-	  
 	  image_markdown = ("\n\n[^(**Picture**)]("+uploaded_image.link+")"+caption_markdown)
 	  log(uploaded_image.link)
 	except Exception as e:
@@ -261,7 +262,7 @@ while True:
 	try:
 	  post.reply (post_markdown)
 	  totalposted = totalposted + 1
-	  success("Posted (#%s)"%totalposted)
+	  success("(#%s) %s"%(totalposted,post.permalink))
 	  time.sleep(3)
 	except Exception as e:
 	  fail("Post Reply: %s @ %s"%(e,sub))
