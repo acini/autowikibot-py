@@ -73,7 +73,7 @@ while True:
   try:
     #comments = r.get_comments("all",limit = 1000)
     #for post in comments:
-    for post in praw.helpers.comment_stream(r,'autowikibotdelreq', limit = None):
+    for post in praw.helpers.comment_stream(r,'all', limit = None):
       
       ### check if comment has links quotes or is previously processed
       has_link = any(string in post.body for string in linkWords)
