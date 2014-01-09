@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 import praw, time, datetime, re, urllib, urllib2, pickle, pyimgur, os, traceback
-from util import success, warn, log, fail, special
+from util import success, warn, log, fail
 from bs4 import BeautifulSoup
 from HTMLParser import HTMLParser
-#TODO use util.py
 ### Uncomment to debug
 #import logging
 #logging.basicConfig(level=logging.DEBUG)
@@ -74,7 +73,7 @@ while True:
   try:
     #comments = r.get_comments("all",limit = 1000)
     #for post in comments:
-    for post in praw.helpers.comment_stream(r,'all', limit = None):
+    for post in praw.helpers.comment_stream(r,'autowikibotdelreq', limit = None):
       
       ### check if comment has links quotes or is previously processed
       has_link = any(string in post.body for string in linkWords)
@@ -141,14 +140,14 @@ while True:
 	if url_string_for_fetch.endswith(".") or url_string_for_fetch.endswith("]"):
 	  url_string_for_fetch = url_string_for_fetch[0:--(url_string_for_fetch.__len__()-1)]
 	
-	log("Pool selection: %s"%post.id)
+	log(post.id)
 	
 	### check for subheading in url string, skip if present #TODO process subheading requests
 	if re.search(r"#",article_name):
 	  warn("Links to subheading")
 	  continue
 	
-	### check if link is wikipedia namespace, skip if present #TODO Not all pages with : are namespace -- fix required
+	### check if link is wikipedia namespace, skip if present
 	has_hash = re.search(r":",article_name) and not re.search(r": ",article_name)
 	if has_hash:
 	  warn("Namespace link")
@@ -160,20 +159,21 @@ while True:
 	  continue
 	
 	### fetch data from wikipedia
-	### TODO use xml, beautifulsoup
 	
 	url = ("http://en.wikipedia.org/w/api.php?action=query&titles="+url_string_for_fetch+"&prop=pageprops&format=xml")
 	try:
 	  pagepropsdata = urllib2.urlopen(url).read()
+	  pagepropsdata = pagepropsdata.decode('utf-8')
 	  ppsoup = BeautifulSoup(pagepropsdata)
 	  article_name_terminal = ppsoup.page['title']
 	except:
-	  article_name_terminal = article_name.replace('\\', '')
+	  article_name_terminal = article_name.replace('\\', '').decode('utf-8')
 	
-	special(article_name_terminal)
+	log(article_name_terminal.encode('utf-8'))
 	url = ("http://en.wikipedia.org/w/api.php?action=parse&page="+url_string_for_fetch+"&format=txt&prop=text&section=0&redirects")
 	try:
 	  sectiondata = urllib2.urlopen(url).read()
+	  sectiondata = sectiondata.decode('utf-8')
 	  sectiondata = reddify(sectiondata)
 	  soup = BeautifulSoup(sectiondata)
 	except Exception as e:
@@ -247,7 +247,7 @@ while True:
 	    #warn("No caption")
 	  
 	  image_markdown = ("\n\n[^(**Picture**)]("+uploaded_image.link+")"+caption_markdown)
-	  success("Image processed")
+	  log(uploaded_image.link)
 	except Exception as e:
 	  image_markdown = ""
 	  image_source_markdown = ""
