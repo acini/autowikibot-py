@@ -183,12 +183,14 @@ while True:
 	
 
 	### Delete any tables, remove coordinates, cite error
-	while bool(soup.table):
+	while soup.table:
 	  discard = soup.table.extract()
-	while bool(soup.find(id='coordinates')):
+	while soup.find(id='coordinates'):
 	  discard = soup.find(id='coordinates').extract()
-	while bool(soup.find("strong", { "class" : "error mw-ext-cite-error" })):
+	while soup.find("strong", { "class" : "error mw-ext-cite-error" }):
 	  discard = soup.find("strong", { "class" : "error mw-ext-cite-error" }).extract()
+	while soup.find("span", { "class" : "t_nihongo_help noprint" }):
+	  discard = soup.find("span", { "class" : "t_nihongo_help noprint" }).extract()
 	
 	### extract paragraph
 	### <!-- is used as ending because it is present with every api fetch
