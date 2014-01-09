@@ -2,7 +2,7 @@
 import re, time
 
 def formatted(*args):
-    now = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
+    now = time.strftime("%Y-%m-%d %H:%M:%S")
     return "["+now+"] "+" ".join(map(str,args))
 
 
