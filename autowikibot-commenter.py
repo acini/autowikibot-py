@@ -42,7 +42,7 @@ def strip_wiki(wiki):
   wiki = re.sub("\( listen\)", '', wiki)
   return wiki
 
-def load_changing_variables():
+def load_changing_variables(): #TODO add warning messages for nonexistent files #TODO load allowed subreddits
   global banned_users
   banned_users = [line.strip() for line in open('banned_users')]
   global badsubs
@@ -302,7 +302,7 @@ while True:
 	except Exception as e:
 	  fail("Post Reply: %s @ %s"%(e,sub))
 	  continue
-	recieved_banned_users = list(shared.get('banned_users'))
+	recieved_banned_users = list(shared.get('banned_users')) #TODO communicate badsubs
 	banned_users = recieved_banned_users+banned_users
 	banned_users = list(set(banned_users))
   except KeyboardInterrupt:
