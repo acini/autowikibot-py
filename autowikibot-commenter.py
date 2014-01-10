@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-import praw, time, datetime, re, urllib, urllib2, pickle, pyimgur, os, traceback, memcache
-from util import success, warn, log, fail
+import praw, time, datetime, re, urllib, urllib2, pickle, pyimgur, os, traceback, memcache, wikipedia
+from util import success, warn, log, fail, special
 from bs4 import BeautifulSoup
 from HTMLParser import HTMLParser
 ### Uncomment to debug
@@ -38,6 +38,7 @@ def reddify(html):
   return html
 
 def strip_wiki(wiki):
+  wiki = re.sub('\[.*?\]','',wiki)
   wiki = re.sub("\( listen\)", '', wiki)
   return wiki
 
@@ -94,7 +95,7 @@ load_data()
 r = praw.Reddit("autowikibot by /u/acini at /r/autowikibot")
 im = pyimgur.Imgur(imgur_client_id)
 linkWords = ['://en.wikipedia.org/wiki/', '://en.m.wikipedia.org/wiki/']
-endoflinkWords = ['\n', ' ', '/']
+endoflinkWords = ['\n', ' ']
 pagepropsdata = ""
   
 ### Login
@@ -119,14 +120,58 @@ while True:
     #comments = r.get_comments("all",limit = 1000)
     #for post in comments:
     for post in praw.helpers.comment_stream(r,'all', limit = None):
+      ### check if comment is already processed, skip if it is
+      if post.id in already_done:
+	#warn("Previously processed")
+	continue
+      else:
+	### check if comment is from excluded subreddit, skip if it is
+	sub = post.subreddit
+	sublower = str(sub).lower()
+	if sublower in badsubs:
+	  #warn("Excluded sub")
+	  continue
+	
+      ### check if there is wikibot call
+      define_call = bool(re.search("wikibot.*?define",post.body.lower()))
+      whatis_call = bool(re.search("wikibot.*?what is",post.body.lower()))
+      if define_call or whatis_call:
+	already_done.append(post.id)
+	log("---------")
+	special("DEFINITION CALL: %s"%post.id)
+	if define_call:
+	  post_body = re.sub('wikibot.*?define','',post.body.lower())
+	else:
+	  post_body = re.sub('wikibot.*?what is','',post.body.lower())
+	post_body = re.sub('\?','',post_body)
+	term = post_body.split(',')[0].strip()
+	log("TERM: %s"%term)
+	try:
+	  definition_text = wikipedia.summary(term,sentences=1,auto_suggest=True,redirect=True)
+	  definition_link = wikipedia.page(term).title
+	  title = wikipedia.page(term).title
+	  if bool(re.search(title,definition_text)):
+	    definition = re.sub(title,"[**"+title+"**]("+definition_link+")",definition_text)
+	  else:
+	    definition = "[**"+title+"**](" + definition_link + "): " + definition_text 
+	  log("INTERPRETATION: %s"%title)
+	  comment = "*Here you go:*\n\n---\n\n>\n"+definition+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(call me!)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
+	except:
+	  log("INTERPRETATION FAIL: %s"%title)
+	  comment = "*" + term + "? Couldn't find that.*\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(smart commands)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
+	try:
+	  post.reply(comment)
+	  totalposted = totalposted + 1
+	  success("#%s CALL REPLY SUCCESSFUL AT %s"%(totalposted,post.permalink))
+	except Exception as e:
+	  warn("CALL REPLY: %s @ %s"%(e,sub))# TODO add to badsubs on 403
+      
       
       ### check if comment has links quotes or is previously processed
+      summary_call = bool(re.search("wikibot.*?tell me about",post.body.lower()))
+      summarize_call = bool(re.search("wikibot.*?summarize",post.body.lower()))
       has_link = any(string in post.body for string in linkWords)
-      if has_link:
-	### check if comment is already processed, skip if it is
-	if post.id in already_done:
-	  #warn("Previously processed")
-	  continue
+      if has_link or summary_call or summarize_call:
 	### check comment body quotes, skip if present
 	if re.search(r"&gt;", post.body):
 	  already_done.append(post.id)
@@ -150,29 +195,50 @@ while True:
 	### Proceed with processing as minumum criteria are satisfied.
 	already_done.append(post.id)
 	
-	### check if comment is from excluded subreddit, skip if it is
-	link = post.permalink
-	link = link.split("http://www.reddit.com/r/")[1]
-	sub = link.split("/")[0]
-	sublower = sub.lower()
-	if str(sublower) in badsubs:
-	  #warn("Excluded sub")
-	  continue
-	
 	### process url string
-	after_split = post.body.split("wikipedia.org/wiki/")[1]
-	
-	### Seprate url string from mistakenly put characters in front of it (commenter mistake)
-	if re.search(r'\)#',after_split):
-	  for e in endoflinkWords:
-	    after_split = after_split.split(e)[0]
+	try:
+	  after_split = post.body.split("wikipedia.org/wiki/")[1]
+	  ### Seprate url string from mistakenly put characters in front of it (commenter mistake)
+	  if re.search(r'\)#',after_split):
+	    for e in endoflinkWords:
+	      after_split = after_split.split(e)[0]
+	  else:
+	    for e in endoflinkWords:
+	      after_split = after_split.split(e)[0]
+	    after_split = after_split.split(")")[0]
+	except:
+	  pass
+	### If it is call for summary, pass variable to summary processor
+	log("---------")
+	if summary_call or summarize_call:
+	  special("SUMMARY CALL: %s"%post.id)
+	  bit_comment_start = "A summary from "
+	  if summary_call:
+	    post_body = re.sub('wikibot.*?tell me about','',post.body.lower())
+	  else:
+	    post_body = re.sub('wikibot.*?summarize','',post.body.lower())
+	  term = post_body.split(',')[0].strip()
+	  log("TERM: %s"%term)
+	  try:
+	    title = wikipedia.page(term).title
+	    after_split = title
+	    log("INTERPRETATION: %s"%title)
+	  except:
+	    log("INTERPRETATION FAIL: %s"%title)
+	    summary_error = "*" + term + "? Couldn't find that.*"
+	    try:
+	      post.reply(summary_error)
+	      totalposted = totalposted + 1
+	    except Exception as e:
+	      warn("POST REPLY: %s @ %s"%(e,sub))# TODO add to badsubs on 403
+	      continue
 	else:
-	  for e in endoflinkWords:
-	    after_split = after_split.split(e)[0]
-	  after_split = after_split.split(")")[0]
+	  log("LINK TRIGGER: %s"%post.id)
+	  bit_comment_start = "A bit from linked "
 	
 	url_string = after_split
 	url_string_for_fetch = url_string.replace('_', '%20')
+	url_string_for_fetch = url_string.replace(' ', '%20')
 	article_name = url_string.replace('_', ' ')
 	
 	### url string correction for brackets
@@ -187,9 +253,6 @@ while True:
 	### In case user comments like "/wiki/Article.", remove last 1 letter
 	if url_string_for_fetch.endswith(".") or url_string_for_fetch.endswith("]"):
 	  url_string_for_fetch = url_string_for_fetch[0:--(url_string_for_fetch.__len__()-1)]
-	
-	log("-------")
-	log("ID %s"%post.id)
 	
 	### check for subheading in url string, skip if present #TODO process subheading requests
 	if re.search(r"#",article_name):
@@ -218,7 +281,7 @@ while True:
 	except:
 	  article_name_terminal = article_name.replace('\\', '').decode('utf-8')
 	
-	log("TOPIC %s"%article_name_terminal.encode('utf-8'))
+	log("TOPIC: %s"%article_name_terminal.encode('utf-8'))
 	url = ("http://en.wikipedia.org/w/api.php?action=parse&page="+url_string_for_fetch+"&format=txt&prop=text&section=0&redirects")
 	try:
 	  sectiondata = urllib2.urlopen(url).read()
@@ -258,7 +321,7 @@ while True:
 	  else:
 	    data = soup.p.text                             #Post only first paragraph
 	except:
-	  fail("BAD DATA FETCHEDS")
+	  fail("BAD DATA FETCHED")
 	  continue
 	data = strip_wiki(data)
 	
@@ -309,23 +372,23 @@ while True:
 	      success("CAPTION PACKAGED")
 	  except Exception as e:
 	    caption_markdown = ""
-	    fail(e)
+	    log(e)
 	  image_markdown = ("\n\n[^(**Picture**)]("+uploaded_image.link+")"+caption_markdown)
 	  success("IMAGE PACKAGED VIA %s"%uploaded_image.link)
 	except Exception as e:
 	  image_markdown = ""
 	  image_source_markdown = ""
-	  fail(e)
+	  log(e)
 	
 	### Add quotes for markdown
 	data = re.sub(r"PARABREAK_REDDITQUOTE", '\n\n>', data)
 	
-	post_markdown = ("*A bit from linked Wikipedia article about* [***"+article_name_terminal+"***](http://en.wikipedia.org/wiki/"+url_string+") : \n\n---\n\n>"+data+"\n\n---"+image_markdown+"\n\n"+image_source_markdown+"[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete' if required. Also deletes if comment's score is -1 or less.)*  ^| [^(commands)](http://www.reddit.com/r/autowikibot/wiki/commandlist) ^| [^(flag for glitch)](http://www.reddit.com/message/compose?to=acini&subject=bot%20glitch&message=%0Acontext:"+post.permalink+")")
+	post_markdown = ("*"+bit_comment_start+"Wikipedia article about* [***"+article_name_terminal+"***](http://en.wikipedia.org/wiki/"+url_string+") : \n\n---\n\n>"+data+"\n\n---"+image_markdown+"\n\n"+image_source_markdown+"[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(smart commands)](http://www.reddit.com/r/autowikibot/wiki/commandlist) ^| [^(flag for glitch)](http://www.reddit.com/message/compose?to=acini&subject=bot%20glitch&message=%0Acontext:"+post.permalink+")")
 	### post
 	try:
 	  post.reply (post_markdown)
 	  totalposted = totalposted + 1
-	  success("#%s POST SUCCESSFUL AT %s"%(totalposted,post.permalink))
+	  success("#%s POST REPLY SUCCESSFUL AT %s"%(totalposted,post.permalink))
 	except Exception as e:
 	  warn("POST REPLY: %s @ %s"%(e,sub))# TODO add to badsubs on 403
 	  continue
@@ -337,7 +400,7 @@ while True:
     warn("EXITING")
     break
   except Exception as e: 
-    traceback.print_exc()
+    #traceback.print_exc()
     warn("GLOBAL: %s"%e)
     time.sleep(3)
     continue
