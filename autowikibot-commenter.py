@@ -38,7 +38,6 @@ def reddify(html):
   return html
 
 def strip_wiki(wiki):
-  wiki = re.sub("\[.*?\]", '', wiki)
   wiki = re.sub("\( listen\)", '', wiki)
   return wiki
 
@@ -135,7 +134,7 @@ while True:
 	### check comment body for more than one wikipedia link, skip if present
 	if re.search(r"wikipedia.org/wiki/.*wikipedia.org/wiki/", post.body, re.DOTALL):
 	  already_done.append(post.id)
-	  #warn("Has second link") #TODO process 2nd link
+	  #warn("Has second link") 
 	  continue
 	### check if comment is bot's own post, skip if it is
 	if (post.author.name == USERNAME):
@@ -238,6 +237,8 @@ while True:
 	  discard = soup.find(id='coordinates').extract()
 	while soup.find("strong", { "class" : "error mw-ext-cite-error" }):
 	  discard = soup.find("strong", { "class" : "error mw-ext-cite-error" }).extract()
+	while soup.find("sup", { "class" : "reference" }):
+	  discard = soup.find("sup", { "class" : "reference" }).extract()
 	while soup.find("span", { "class" : "t_nihongo_help noprint" }):
 	  discard = soup.find("span", { "class" : "t_nihongo_help noprint" }).extract()
 	
