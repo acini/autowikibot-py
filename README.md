@@ -21,6 +21,8 @@ Requirements
 * `pip install praw`
 * `pip install pyimgur`
 * `pip install beautifulsoup4`
+* `apt-get install memcached`
+* `apt-get install python-memcache`
 
 These ones were used in kiwix-version, which is now deprecated
 * `pip install BeautifulSoup`

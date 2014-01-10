@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import praw, time, datetime, re, urllib, urllib2, pickle, pyimgur, os, traceback
+import praw, time, datetime, re, urllib, urllib2, pickle, pyimgur, os, traceback, memcache
 from util import success, warn, log, fail
 from bs4 import BeautifulSoup
 from HTMLParser import HTMLParser
@@ -7,6 +7,13 @@ from HTMLParser import HTMLParser
 #import logging
 #logging.basicConfig(level=logging.DEBUG)
 
+### Set memcache client
+shared = memcache.Client(['127.0.0.1:11211'], debug=0)
+
+### Set root directory to script directory
+abspath = os.path.abspath(__file__)
+dname = os.path.dirname(abspath)
+os.chdir(dname)
 
 ### functions
 class MLStripper(HTMLParser):
@@ -35,19 +42,41 @@ def strip_wiki(wiki):
   wiki = re.sub("\( listen\)", '', wiki)
   return wiki
 
+def load_changing_variables():
+  global banned_users
+  banned_users = [line.strip() for line in open('banned_users')]
+  global badsubs
+  badsubs = [line.strip() for line in open('badsubs')]
+  global already_done
+  already_done = [line.strip() for line in open('already_done_dump')]
+  global totalposted
+  with open('totalposted') as f:   #TODO replace pickle with simple write
+    totalposted = pickle.load(f)
+  success("Changing variables loaded")
+
+def save_changing_variables():
+  with open('banned_users', 'w+') as myfile:
+    for item in banned_users:
+      myfile.write("%s\n" % item)
+  with open('badsubs', 'w+') as myfile:
+    for item in badsubs:
+      myfile.write("%s\n" % item)
+  with open('already_done_dump', 'w+') as myfile:
+    for item in already_done:
+      myfile.write("%s\n" % item)
+  with open('totalposted', 'w') as f:#TODO replace pickle with simple write
+    pickle.dump(totalposted, f)
+  success("Changing variables saved")
+
 ### Load variables from disk
-already_done = [line.strip() for line in open('already_done_dump')]
-banned_users = [line.strip() for line in open('banned_users')]
-badsubs = [line.strip() for line in open('badsubs')]
-with open('totalposted') as f:
-  totalposted = pickle.load(f)
+
+load_changing_variables()
 with open ('imgur_client_id', 'r') as myfile:
   CLIENT_ID=myfile.read()
 with open ('userpass', 'r') as myfile:
   lines=myfile.readlines()
 USERNAME = lines[0].strip()
 PASSWORD = lines[1].strip()
-    
 ### declare variables
 r = praw.Reddit("autowikibot by /u/acini at /r/autowikibot")
 im = pyimgur.Imgur(CLIENT_ID)
@@ -90,14 +119,17 @@ while True:
 	### check comment body for more than one wikipedia link, skip if present
 	if re.search(r"wikipedia.org/wiki/.*wikipedia.org/wiki/", post.body, re.DOTALL):
 	  already_done.append(post.id)
-	  #warn("Has second link")
+	  #warn("Has second link") #TODO process 2nd link
 	  continue
 	### check if comment is bot's own post, skip if it is
-	if (post.author.name == USERNAME) or post.author.name in banned_users:
+	if (post.author.name == USERNAME):
 	  already_done.append(post.id)
 	  #warn("My comment")
 	  continue
-
+	if post.author.name in banned_users:
+	  already_done.append(post.id)
+	  #warn("Banned user")
+	  continue
 	
 	### Proceed with processing as minumum criteria are satisfied.
 	already_done.append(post.id)
@@ -176,6 +208,7 @@ while True:
 	  sectiondata = sectiondata.decode('utf-8')
 	  sectiondata = reddify(sectiondata)
 	  soup = BeautifulSoup(sectiondata)
+	  globalsoup = soup
 	except Exception as e:
 	  fail("Fetch: %s"%e)
 	  continue
@@ -236,14 +269,15 @@ while True:
 	  
 	  ### Extract caption from already fetched sectiondata
 	  try:
-	    caption_div = soup.find("div", { "class" : "thumbcaption" })
+	    caption_div = globalsoup.find("div", { "class" : "thumbcaption" })
 	    discard = caption_div.find("div", { "class" : "magnify" }).extract()
 	    caption = caption_div.text.strip()
 	    caption = strip_wiki(caption)
-	    caption = re.sub(r' ',' ^',caption)
 	    caption = re.sub(r'\)','\)',caption)
 	    caption = re.sub(r'\(','\(',caption)
 	    caption = re.sub(r'\*','',caption)
+	    caption = re.sub(r'\n',' ',caption)
+	    caption = re.sub(r' ',' ^',caption)
 	    if caption != "":
 	      caption_markdown = (" ^- **^"+caption+"**")
 	  except:
@@ -259,24 +293,20 @@ while True:
 	### Add quotes for markdown
 	data = re.sub(r"PARABREAK_REDDITQUOTE", '\n\n>', data)
 	
-	post_markdown = ("*A bit from linked Wikipedia article about* [***"+article_name_terminal+"***](http://en.wikipedia.org/wiki/"+url_string+") : \n\n---\n\n>"+data+"\n\n---"+image_markdown+"\n\n"+image_source_markdown+"[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete' if required. Also deletes if comment's score is -1 or less.)* ^| [^(flag for glitch)](http://www.reddit.com/message/compose?to=acini&subject=bot%20glitch&message=%0Acontext:"+post.permalink+")")
+	post_markdown = ("*A bit from linked Wikipedia article about* [***"+article_name_terminal+"***](http://en.wikipedia.org/wiki/"+url_string+") : \n\n---\n\n>"+data+"\n\n---"+image_markdown+"\n\n"+image_source_markdown+"[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete' if required. Also deletes if comment's score is -1 or less.)*  ^| [^(commands)](http://www.reddit.com/r/autowikibot/wiki/commandlist) ^| [^(flag for glitch)](http://www.reddit.com/message/compose?to=acini&subject=bot%20glitch&message=%0Acontext:"+post.permalink+")")
 	### post
 	try:
 	  post.reply (post_markdown)
 	  totalposted = totalposted + 1
 	  success("(#%s) %s"%(totalposted,post.permalink))
-	  time.sleep(3)
 	except Exception as e:
 	  fail("Post Reply: %s @ %s"%(e,sub))
 	  continue
-	  
+	recieved_banned_users = list(shared.get('banned_users'))
+	banned_users = recieved_banned_users+banned_users
+	banned_users = list(set(banned_users))
   except KeyboardInterrupt:
-    with open('already_done_dump', 'w+') as myfile:
-      for item in already_done:
-	myfile.write("%s\n" % item)
-      with open('totalposted', 'w') as f:
-	pickle.dump(totalposted, f)
-    success("Data dumped to files.")
+    save_changing_variables()
     log("Bye!")
     break
   except Exception as e: 

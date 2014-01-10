@@ -1,11 +1,24 @@
 # -*- coding: utf-8 -*-
-import praw, time, re, pickle, traceback
+import praw, time, re, pickle, traceback, os, memcache
 from util import success, warn, log, fail
 
+### Set root directory to script directory
+abspath = os.path.abspath(__file__)
+dname = os.path.dirname(abspath)
+os.chdir(dname)
+
+### Set memcache client
+shared = memcache.Client(['127.0.0.1:11211'], debug=0)
+
 r = praw.Reddit("autowikibot by /u/acini at /r/autowikibot")
-triggerkeyword = "delete"
+deletekeyword = "delete"
+excludekeyword = "leave me alone"
 
 ### Load saved data
+global banned_users
+banned_users = [line.strip() for line in open('banned_users')]
+shared.set('banned_users',banned_users)
+
 with open('totaldeleted') as f:
     deleted = pickle.load(f)
 with open ('userpass', 'r') as myfile:
@@ -90,7 +103,8 @@ while True:
       try:
 	unread = r.get_unread(limit=None)
 	for msg in unread:
-	  if re.search(triggerkeyword, msg.body.lower()) or re.search("\+remove", msg.body.lower()): #remove "+remove" for new bot username
+	  ### Remove comment 
+	  if re.search(deletekeyword, msg.body.lower()) or re.search("\+remove", msg.body.lower()): #remove "+remove" for new bot username
 	    try:
 	      bot_comment_id = msg.parent_id
 	      bot_comment = r.get_info(thing_id=bot_comment_id)
@@ -119,6 +133,16 @@ while True:
 	      continue
 	  else:
 	    msg.mark_as_unread()
+	  ### Add user to exclude list
+	  if re.search(excludekeyword, msg.body.lower()):
+	    with open('banned_users', 'a') as myfile:
+	      myfile.write("%s\n"%msg.author.name)
+	    msg.mark_as_read()
+	    msg.reply("*Done! I won't reply to your comments now.*\n\n*Have a nice day!*")
+	    ### Save user to arra
+	    banned_users.append(msg.author.name)
+	    shared.set('banned_users',banned_users)
+	    success("Banned /u/%s"%msg.author.name)
 	  time.sleep(1)
 	time.sleep(60)
       except KeyboardInterrupt:
