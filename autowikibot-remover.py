@@ -110,7 +110,7 @@ while True:
 
     ### Check inbox 15 times
     log("AUTODELETE CYCLES STARTED")
-    for x in range(1, 16):
+    for x in range(1, 6):
       log("CYCLE %s"%x)
       try:
 	unread = r.get_unread(limit=None)
@@ -141,7 +141,7 @@ while True:
 		success("AUTODELETION (ORPHAN) AT %s"%bot_comment_parent.permalink)
 	      else:
 		fail("%s\033[1;m"%e)
-	      msg.mark_as_read()
+	      #msg.mark_as_read()
 	      continue
 	  else:
 	    msg.mark_as_unread()
@@ -184,7 +184,7 @@ while True:
     log("EXITING")
     break
   except Exception as e:
-    traceback.print_exc()
+    #traceback.print_exc()
     fail(e)
     time.sleep(3)
     continue
