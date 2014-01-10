@@ -97,10 +97,10 @@ while True:
     urate = round(upvoted / float(total) * 100)
     nrate = round(unvoted / float(total) * 100)
     drate = round(downvoted / float(total) * 100)
-    log("Upvoted:      %s\t%s\b\b %%"%(upvoted,urate))
-    log("Unvoted       %s\t%s\b\b %%"%(unvoted,nrate))
-    log("Downvoted:    %s\t%s\b\b %%"%(downvoted,drate))
-    log("Total:        %s"%total)
+    warn("Upvoted:      %s\t%s\b\b %%"%(upvoted,urate))
+    warn("Unvoted       %s\t%s\b\b %%"%(unvoted,nrate))
+    warn("Downvoted:    %s\t%s\b\b %%"%(downvoted,drate))
+    warn("Total:        %s"%total)
     
     with open('totaldeleted', 'w') as f:
       pickle.dump(deleted, f)
