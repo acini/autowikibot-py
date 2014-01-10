@@ -13,21 +13,33 @@ shared = memcache.Client(['127.0.0.1:11211'], debug=0)
 r = praw.Reddit("autowikibot by /u/acini at /r/autowikibot")
 deletekeyword = "delete"
 excludekeyword = "leave me alone"
-
-### Load saved data
 global banned_users
-banned_users = [line.strip() for line in open('banned_users')]
-shared.set('banned_users',banned_users)
 
-with open('totaldeleted') as f:
-    deleted = pickle.load(f)
-with open ('userpass', 'r') as myfile:
-  lines=myfile.readlines()
+def file_warning():
+  fail("One or more of data files is not found or is corrupted.")
+  log("Have them configured as follows:")
+  log("totaldeleted - Create empty file if running for first time.")
+  log("banned_users - Create empty file if running for first time. Bot will add banned users automatically. Add manually on separate lines.")
+ 
+### Load saved data
+try:
+  banned_users = [line.strip() for line in open('banned_users')]
+  shared.set('banned_users',banned_users)
+  with open('totaldeleted') as f: #TODO replace pickle
+      deleted = pickle.load(f)
+  with open ('userpass', 'r') as myfile:
+    lines=myfile.readlines()
+  success("Data loaded")
+except:
+  file_warning()
+  exit()
+
+
+
+### Login
 USERNAME = lines[0].strip()
 PASSWORD = lines[1].strip()
 
-### Login
-### Wiki_FirstPara_bot is old account
 Trying = True
 while Trying:
         try:
@@ -139,7 +151,12 @@ while True:
 	      myfile.write("%s\n"%msg.author.name)
 	    msg.mark_as_read()
 	    msg.reply("*Done! I won't reply to your comments now.*\n\n*Have a nice day!*")
-	    ### Save user to arra
+	    ### Save user to array and communicate to commenter process
+	    try:
+	      banned_users = [line.strip() for line in open('banned_users')] #redundancy if banned user is manually added
+	    except:
+	      file_warning()
+	    shared.set('banned_users',banned_users)
 	    banned_users.append(msg.author.name)
 	    shared.set('banned_users',banned_users)
 	    success("Banned /u/%s @ %s"%(msg.author.name,bot_comment.permalink))
@@ -158,12 +175,12 @@ while True:
     log("Autodelete cycles completed.")
     with open('totaldeleted', 'w') as f:
       pickle.dump(deleted, f)
-    success("Statistics saved.")
+    success("Data saved")
         
   except KeyboardInterrupt:
     with open('totaldeleted', 'w') as f:
 	pickle.dump(deleted, f)
-    success("Statistics dumped to file.")
+    success("Data saved")
     log("Bye!")
     break
   except Exception as e:

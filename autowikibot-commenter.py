@@ -42,17 +42,37 @@ def strip_wiki(wiki):
   wiki = re.sub("\( listen\)", '', wiki)
   return wiki
 
-def load_changing_variables(): #TODO add warning messages for nonexistent files #TODO load allowed subreddits
-  global banned_users
-  banned_users = [line.strip() for line in open('banned_users')]
-  global badsubs
-  badsubs = [line.strip() for line in open('badsubs')]
-  global already_done
-  already_done = [line.strip() for line in open('already_done_dump')]
-  global totalposted
-  with open('totalposted') as f:   #TODO replace pickle with simple write
-    totalposted = pickle.load(f)
-  success("Changing variables loaded")
+def file_warning():
+  fail("One or more of data files is not found or is corrupted.")
+  log("Have them configured as follows:")
+  log("already_done_dump - Create empty file if running for first time.")
+  log("totalposted - Create empty file if running for first time.")
+  log("badsubs - Create empty file if running for first time. Add excluded subreddits if you are using \"all\" as allowed subreddit. Leave empty if allowing specific subreddits.")
+  log("banned_users - Create empty file if running for first time. Bot will add banned users automatically. Add manually on separate lines.")
+  log("imgur_client_id - Put your imgur client_id in that file")
+  
+def load_data(): #TODO load allowed subreddits
+  try:
+    log("Loading")
+    global banned_users
+    banned_users = [line.strip() for line in open('banned_users')]
+    global badsubs
+    badsubs = [line.strip() for line in open('badsubs')]
+    global already_done
+    already_done = [line.strip() for line in open('already_done_dump')]
+    with open('totalposted') as f:   #TODO replace pickle with simple write store in one file called stats
+      global totalposted
+      totalposted = pickle.load(f)
+    with open ('imgur_client_id', 'r') as myfile:
+      global imgur_client_id
+      imgur_client_id=myfile.read()
+    with open ('userpass', 'r') as myfile:
+      global userpass_lines
+      userpass_lines=myfile.readlines()
+    success("Data loaded")
+  except:
+    file_warning()
+    exit()
 
 def save_changing_variables():
   with open('banned_users', 'w+') as myfile:
@@ -66,25 +86,21 @@ def save_changing_variables():
       myfile.write("%s\n" % item)
   with open('totalposted', 'w') as f:#TODO replace pickle with simple write
     pickle.dump(totalposted, f)
-  success("Changing variables saved")
+  success("Data saved")
 
-### Load variables from disk
-
-load_changing_variables()
-with open ('imgur_client_id', 'r') as myfile:
-  CLIENT_ID=myfile.read()
-with open ('userpass', 'r') as myfile:
-  lines=myfile.readlines()
-USERNAME = lines[0].strip()
-PASSWORD = lines[1].strip()
+  
 ### declare variables
+load_data()
 r = praw.Reddit("autowikibot by /u/acini at /r/autowikibot")
-im = pyimgur.Imgur(CLIENT_ID)
+im = pyimgur.Imgur(imgur_client_id)
 linkWords = ['://en.wikipedia.org/wiki/', '://en.m.wikipedia.org/wiki/']
 endoflinkWords = ['\n', ' ', '/']
 pagepropsdata = ""
-
+  
 ### Login
+USERNAME = userpass_lines[0].strip()
+PASSWORD = userpass_lines[1].strip()
+
 Trying = True
 while Trying:
         try:
