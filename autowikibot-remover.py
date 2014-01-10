@@ -142,7 +142,7 @@ while True:
 	    ### Save user to arra
 	    banned_users.append(msg.author.name)
 	    shared.set('banned_users',banned_users)
-	    success("Banned /u/%s"%msg.author.name)
+	    success("Banned /u/%s @ %s"%(msg.author.name,bot_comment.permalink))
 	  time.sleep(1)
 	time.sleep(60)
       except KeyboardInterrupt:
@@ -153,7 +153,7 @@ while True:
       except Exception as e:
 	traceback.print_exc()
 	fail(e)
-	time.sleep(3)
+	time.sleep(60)
 	continue
     log("Autodelete cycles completed.")
     with open('totaldeleted', 'w') as f:
