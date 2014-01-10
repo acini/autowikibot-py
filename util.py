@@ -19,4 +19,4 @@ def success(*args):
     print '\033[92m'+apply(formatted,args)+'\033[0m'
     
 def special(*args):
-    print '\033[94m'+apply(formatted,args)+'\033[0m'
+    print '\033[95m'+apply(formatted,args)+'\033[0m'
