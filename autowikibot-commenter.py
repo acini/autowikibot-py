@@ -52,7 +52,6 @@ def file_warning():
   
 def load_data(): #TODO load allowed subreddits
   try:
-    log("Loading")
     global banned_users
     banned_users = [line.strip() for line in open('banned_users')]
     global badsubs
@@ -68,15 +67,17 @@ def load_data(): #TODO load allowed subreddits
     with open ('userpass', 'r') as myfile:
       global userpass_lines
       userpass_lines=myfile.readlines()
-    success("Data loaded")
+    success("DATA LOADED")
   except:
     file_warning()
     exit()
 
 def save_changing_variables():
+  banned_users.sort()
   with open('banned_users', 'w+') as myfile:
     for item in banned_users:
       myfile.write("%s\n" % item)
+  badsubs.sort()
   with open('badsubs', 'w+') as myfile:
     for item in badsubs:
       myfile.write("%s\n" % item)
@@ -85,7 +86,7 @@ def save_changing_variables():
       myfile.write("%s\n" % item)
   with open('totalposted', 'w') as f:#TODO replace pickle with simple write
     pickle.dump(totalposted, f)
-  success("Data saved")
+  success("DATA SAVED")
 
   
 ### declare variables
@@ -104,10 +105,10 @@ Trying = True
 while Trying:
         try:
                 r.login(USERNAME, PASSWORD)
-		success("Logged in.")
+		success("LOGGED IN")
                 Trying = False
         except praw.errors.InvalidUserPass:
-                fail("Wrong username or password.")
+                fail("WRONG USERNAME OR PASSWORD")
                 exit()
         except Exception as e:
 	  fail("%s"%e)
@@ -187,17 +188,18 @@ while True:
 	if url_string_for_fetch.endswith(".") or url_string_for_fetch.endswith("]"):
 	  url_string_for_fetch = url_string_for_fetch[0:--(url_string_for_fetch.__len__()-1)]
 	
-	log(post.id)
+	log("-------")
+	log("ID %s"%post.id)
 	
 	### check for subheading in url string, skip if present #TODO process subheading requests
 	if re.search(r"#",article_name):
-	  warn("Links to subheading")
+	  #warn("Links to subheading")
 	  continue
 	
 	### check if link is wikipedia namespace, skip if present
 	has_hash = re.search(r":",article_name) and not re.search(r": ",article_name)
 	if has_hash:
-	  warn("Namespace link")
+	  #warn("Namespace link")
 	  continue
 
 	### check if article is a list, skip if it is
@@ -216,7 +218,7 @@ while True:
 	except:
 	  article_name_terminal = article_name.replace('\\', '').decode('utf-8')
 	
-	log(article_name_terminal.encode('utf-8'))
+	log("TOPIC %s"%article_name_terminal.encode('utf-8'))
 	url = ("http://en.wikipedia.org/w/api.php?action=parse&page="+url_string_for_fetch+"&format=txt&prop=text&section=0&redirects")
 	try:
 	  sectiondata = urllib2.urlopen(url).read()
@@ -225,7 +227,7 @@ while True:
 	  soup = BeautifulSoup(sectiondata)
 	  globalsoup = soup
 	except Exception as e:
-	  fail("Fetch: %s"%e)
+	  fail("FETCH: %s"%e)
 	  continue
 	
 	
@@ -256,21 +258,23 @@ while True:
 	  else:
 	    data = soup.p.text                             #Post only first paragraph
 	except:
-	  fail("Bad data fetched")
+	  fail("BAD DATA FETCHEDS")
 	  continue
 	data = strip_wiki(data)
 	
 	data = re.sub("Cite error: There are ref tags on this page, but the references will not show without a \{\{reflist\}\} template \(see the help page\)\.", '', data)
+	success("TEXT PACKAGED")
 	
 	### Fetch page image from wikipedia
 	try:
 	  ### Extract image url
 	  try:
 	    image_name = ppsoup.pageprops["page_image"]
+	    image_name = image_name.decode('utf-8')
 	  except:
-	    raise Exception("none on page")
+	    raise Exception("NO PAGE IMAGE")
 	  if image_name.endswith("svg") or image_name.endswith("ogg"):
-	    raise Exception("Image type unsupported by imgur")
+	    raise Exception("IMAGE TYPE UNSUPPORTED BY IMGUR")
 	  url = ("http://en.wikipedia.org/w/api.php?action=query&titles=File:"+image_name+"&prop=imageinfo&iiprop=url|mediatype&iiurlwidth=640&format=xml")
 	  wi_api_data = urllib2.urlopen(url).read()
 	  wisoup = BeautifulSoup(wi_api_data)
@@ -286,7 +290,12 @@ while True:
 	  
 	  ### Extract caption from already fetched sectiondata
 	  try:
-	    caption_div = globalsoup.find("div", { "class" : "thumbcaption" })
+	    if globalsoup.find("div", { "class" : "thumbcaption" }):
+	      caption_div = globalsoup.find("div", { "class" : "thumbcaption" })
+	    else:
+	      raise Exception("CAPTION NOT PACKAGED: IMAGE HAS NO CAPTION")
+	    if image_name not in str(caption_div.find("div", { "class" : "magnify" })):
+	      raise Exception("CAPTION NOT PACKAGED: IMAGE IS NOT PAGE'S MAIN IMAGE")
 	    discard = caption_div.find("div", { "class" : "magnify" }).extract()
 	    caption = caption_div.text.strip()
 	    caption = strip_wiki(caption)
@@ -297,15 +306,16 @@ while True:
 	    caption = re.sub(r' ',' ^',caption)
 	    if caption != "":
 	      caption_markdown = (" ^- **^"+caption+"**")
-	  except:
+	      success("CAPTION PACKAGED")
+	  except Exception as e:
 	    caption_markdown = ""
-	    #warn("No caption")
+	    fail(e)
 	  image_markdown = ("\n\n[^(**Picture**)]("+uploaded_image.link+")"+caption_markdown)
-	  log(uploaded_image.link)
+	  success("IMAGE PACKAGED VIA %s"%uploaded_image.link)
 	except Exception as e:
 	  image_markdown = ""
 	  image_source_markdown = ""
-	  #warn("No image: (%s)"%e)
+	  fail(e)
 	
 	### Add quotes for markdown
 	data = re.sub(r"PARABREAK_REDDITQUOTE", '\n\n>', data)
@@ -315,20 +325,20 @@ while True:
 	try:
 	  post.reply (post_markdown)
 	  totalposted = totalposted + 1
-	  success("(#%s) %s"%(totalposted,post.permalink))
+	  success("#%s POST SUCCESSFUL AT %s"%(totalposted,post.permalink))
 	except Exception as e:
-	  fail("Post Reply: %s @ %s"%(e,sub))
+	  warn("POST REPLY: %s @ %s"%(e,sub))# TODO add to badsubs on 403
 	  continue
 	recieved_banned_users = list(shared.get('banned_users')) #TODO communicate badsubs
 	banned_users = recieved_banned_users+banned_users
 	banned_users = list(set(banned_users))
   except KeyboardInterrupt:
     save_changing_variables()
-    log("Bye!")
+    warn("EXITING")
     break
   except Exception as e: 
     traceback.print_exc()
-    fail("Global: %s"%e)
+    warn("GLOBAL: %s"%e)
     time.sleep(3)
     continue
   

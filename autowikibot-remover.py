@@ -29,7 +29,7 @@ try:
       deleted = pickle.load(f)
   with open ('userpass', 'r') as myfile:
     lines=myfile.readlines()
-  success("Data loaded")
+  success("DATA LOADED")
 except:
   file_warning()
   exit()
@@ -44,10 +44,10 @@ Trying = True
 while Trying:
         try:
                 r.login(USERNAME, PASSWORD)
-                success("Logged in.")
+                success("LOGGED IN")
                 Trying = False
         except praw.errors.InvalidUserPass:
-                fail("Wrong username or password.")
+                fail("WRONG USERNAME OR PASSWORD")
                 exit()
         except Exception as e:
 	  fail(e)
@@ -55,7 +55,7 @@ while Trying:
 
 while True:
   try:
-    log("Comment score check cycle started")
+    log("COMMENT SCORE CHECK CYCLE STARTED")
     user = r.get_redditor(USERNAME)
     total = 0
     upvoted = 0
@@ -93,7 +93,7 @@ while True:
 	downvoted = downvoted + 1
       
     print ("")
-    log("Comment score check cycle completed")
+    log("COMMENT SCORE CHECK CYCLE COMPLETED")
     urate = round(upvoted / float(total) * 100)
     nrate = round(unvoted / float(total) * 100)
     drate = round(downvoted / float(total) * 100)
@@ -104,14 +104,14 @@ while True:
     
     with open('totaldeleted', 'w') as f:
       pickle.dump(deleted, f)
-    log("Statistics saved")
+    log("STATISTICS SAVED")
     
     
 
     ### Check inbox 15 times
-    log("Autodelete cycles started")
+    log("AUTODELETE CYCLES STARTED")
     for x in range(1, 16):
-      log("Cycle %s"%x)
+      log("CYCLE %s"%x)
       try:
 	unread = r.get_unread(limit=None)
 	for msg in unread:
@@ -125,20 +125,20 @@ while True:
 		if msg.author.name == bot_comment_parent.author.name:
 		  bot_comment.delete()
 		  deleted = deleted + 1
-		  success("Autodeletion @ %s"%bot_comment_parent.permalink)
+		  success("AUTODELETION AT %s"%bot_comment_parent.permalink)
 		else:
 		  #msg.reply ("*Sorry. Only /u/%s can trigger this delete.*"%bot_comment_parent.author.name)
-		  fail("Bad autodelete request @ /u/%s"%bot_comment_parent.permalink)
+		  fail("BAD AUTODELETE REQUEST AT /u/%s"%bot_comment_parent.permalink)
 	      else:
 		if msg.author.name != USERNAME:
-		  warn("Autodelete flag out of context @ %s"%bot_comment_parent.permalink)
+		  warn("AUTODELETE FLAG OUT OF CONTEXT AT %s"%bot_comment_parent.permalink)
 		  continue
 	      msg.mark_as_read()
 	    except Exception as e:
 	      if (str(e)=="'NoneType' object has no attribute 'name'"):
 		bot_comment.delete()
 		deleted = deleted + 1
-		success("Autodeletion (orphan) @ %s"%bot_comment_parent.permalink)
+		success("AUTODELETION (ORPHAN) AT %s"%bot_comment_parent.permalink)
 	      else:
 		fail("%s\033[1;m"%e)
 	      msg.mark_as_read()
@@ -159,29 +159,29 @@ while True:
 	    shared.set('banned_users',banned_users)
 	    banned_users.append(msg.author.name)
 	    shared.set('banned_users',banned_users)
-	    success("Banned /u/%s @ %s"%(msg.author.name,bot_comment.permalink))
+	    success("BANNED /u/%s AT %s"%(msg.author.name,bot_comment.permalink))
 	  time.sleep(1)
 	time.sleep(60)
       except KeyboardInterrupt:
 	with open('totaldeleted', 'w') as f:
 	  pickle.dump(deleted, f)
-	success("Statistics dumped to file.")
+	success("STATISTICS DUMPED TO FILE")
 	exit()
       except Exception as e:
 	traceback.print_exc()
 	fail(e)
 	time.sleep(60)
 	continue
-    log("Autodelete cycles completed.")
+    log("AUTODELETE CYCLES COMPLETED")
     with open('totaldeleted', 'w') as f:
       pickle.dump(deleted, f)
-    success("Data saved")
+    success("DATA SAVED")
         
   except KeyboardInterrupt:
     with open('totaldeleted', 'w') as f:
 	pickle.dump(deleted, f)
-    success("Data saved")
-    log("Bye!")
+    success("DATA SAVED")
+    log("EXITING")
     break
   except Exception as e:
     traceback.print_exc()
