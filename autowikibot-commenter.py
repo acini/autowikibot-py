@@ -33,8 +33,8 @@ def strip_tags(html):
 def reddify(html):
   html = html.replace('<b>', '**')
   html = html.replace('</b>', '**')
-  html = html.replace('<i>', '*')
-  html = html.replace('</i>', '*')
+  #html = html.replace('<i>', '*')
+  #html = html.replace('</i>', '*')
   return html
 
 def strip_wiki(wiki):
