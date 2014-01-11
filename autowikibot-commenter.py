@@ -139,6 +139,18 @@ while True:
       if post.id in already_done:
 	#warn("Previously processed")
 	continue
+      if (post.author.name == USERNAME):
+	already_done.append(post.id)
+	#warn("My comment")
+	continue
+      ### check if comment is by banned user, skip if it is
+      if post.author.name in banned_users:
+	already_done.append(post.id)
+	#warn("Banned user")
+	continue
+      
+      ### Proceed with processing as minumum criteria are satisfied.
+	already_done.append(post.id)
 	
       ### check if there is wikibot call
       define_call = bool(re.search("wikibot.*?define",post.body.lower()))
@@ -146,9 +158,14 @@ while True:
 	already_done.append(post.id)
 	log("__________________________________________________")
 	special("DEFINITION CALL: %s"%post.permalink)
-	post_body = re.sub('wikibot.*?define','__BODYSPLIT__',post.body.lower())
+	post_body = re.sub('wikibot.*?define ','__BODYSPLIT__',post.body.lower())
 	post_body = re.sub('\?','',post_body)
-	term = post_body.split('__BODYSPLIT__')[1].strip()
+	term = post_body.split('__BODYSPLIT__')[1]
+	try:
+	  term = term.split('\n')[0]
+	except:
+	  log("COULD NOT SPLIT")
+	  pass
 	log("TERM: %s"%term)
 	try:
 	  definition_text = wikipedia.summary(term,sentences=1,auto_suggest=False,redirect=True)
@@ -168,6 +185,7 @@ while True:
 	    log("ASKING FOR DISAMBIGUATION")
 	  else:
 	    log("INTERPRETATION FAIL: %s"%term)
+	    print term
 	    try:
 	      term = wikipedia.search(term,results=1)[0]
 	      definition_text = wikipedia.summary(term,sentences=1,auto_suggest=False,redirect=True)
@@ -183,22 +201,22 @@ while True:
 	      comment = "*You mean,* **"+term+"**?\n\n---\n\n>"+definition+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(summon me!)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
 	      log("SUGGESTING %s"%term)
 	    except:
-	      comment = "*" + term + "? Couldn't find that.\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(summon me!)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
-	      log("COULD NOT SUGGEST FOR %s",term)
+	      comment = "*" + term + "? Couldn't find that.*\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(summon me!)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
+	      log("COULD NOT SUGGEST FOR %s"%term)
 	    try:
 	      post.reply(comment)
 	      totalposted = totalposted + 1
-	      success("#%s REPLY SUCCESSFUL AT %s"%(totalposted,post.permalink))
+	      success("#%s REPLY SUCCESSFUL"%totalposted)
 	    except Exception as e:
 	      warn("REPLY FAILED: %s @ %s"%(e,post.subreddit))# TODO add to badsubs on 403
 	    continue
 	try:
 	  post.reply(comment)
 	  totalposted = totalposted + 1
-	  success("#%s CALL REPLY SUCCESSFUL AT %s"%(totalposted,post.permalink))
+	  success("#%s CALL REPLY SUCCESSFUL"%totalposted)
 	except Exception as e:
 	  warn("CALL REPLY: %s @ %s"%(e,post.subreddit))# TODO add to badsubs on 403
-      
+	#continue
       
       ### check if comment has links quotes or is previously processed
       tell_me_call = bool(re.search("wikibot.*?tell .*? about",post.body.lower()))
@@ -216,15 +234,6 @@ while True:
 	  #warn("Has second link") 
 	  continue
 	### check if comment is bot's own post, skip if it is
-	if (post.author.name == USERNAME):
-	  already_done.append(post.id)
-	  #warn("My comment")
-	  continue
-	### check if comment is by banned user, skip if it is
-	if post.author.name in banned_users:
-	  already_done.append(post.id)
-	  #warn("Banned user")
-	  continue
 	
 	### check if comment is from excluded subreddit, skip if it is
 	sub = post.subreddit
@@ -232,9 +241,6 @@ while True:
 	if sublower in badsubs:
 	  #warn("Excluded sub")
 	  continue
-	
-	### Proceed with processing as minumum criteria are satisfied.
-	already_done.append(post.id)
 	
 	### process url string
 	try:
@@ -259,7 +265,13 @@ while True:
 	    post_body = re.sub('wikibot.*?tell .*? about','__BODYSPLIT__',post.body.lower())
 	  else:
 	    post_body = re.sub('wikibot.*?wh.*? (is a|are the|is|are)','__BODYSPLIT__',post.body.lower())
-	  term = post_body.split('__BODYSPLIT__')[1].strip(' |?')
+	  term = post_body.split('__BODYSPLIT__')[1]
+	  term = re.sub('\?','',term)
+	  try:
+	    term = term.split('\n')[0]
+	  except:
+	    log("COULD NOT SPLIT")
+	    pass
 	  log("TERM: %s"%term)
 	  try:
 	    title = wikipedia.page(term,auto_suggest=False).title
