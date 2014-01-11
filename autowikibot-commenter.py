@@ -127,7 +127,7 @@ while True:
 	
       ### check if there is wikibot call
       define_call = bool(re.search("wikibot.*?define",post.body.lower()))
-      whatis_call = bool(re.search("wikibot.*?what is",post.body.lower()))
+      whatis_call = bool(re.search("wikibot.*?wh.*? is",post.body.lower()))
       if define_call or whatis_call:
 	already_done.append(post.id)
 	log("---------")
@@ -135,7 +135,7 @@ while True:
 	if define_call:
 	  post_body = re.sub('wikibot.*?define','__BODYSPLIT__',post.body.lower())
 	else:
-	  post_body = re.sub('wikibot.*?what is','__BODYSPLIT__',post.body.lower())
+	  post_body = re.sub('wikibot.*?wh.*? is','__BODYSPLIT__',post.body.lower())
 	post_body = re.sub('\?','',post_body)
 	term = post_body.split('__BODYSPLIT__')[1].strip()
 	log("TERM: %s"%term)
@@ -148,9 +148,9 @@ while True:
 	  else:
 	    definition = "[**"+title+"**](" + definition_link + "): " + definition_text 
 	  log("INTERPRETATION: %s"%title)
-	  comment = "*Here you go:*\n\n---\n\n>\n"+definition+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(call me!)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
+	  comment = "*Here you go:*\n\n---\n\n>\n"+definition+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(smart commands)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
 	except:
-	  log("INTERPRETATION FAIL: %s"%title)
+	  log("INTERPRETATION FAIL: %s"%term)
 	  comment = "*" + term + "? Couldn't find that.*\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(smart commands)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
 	try:
 	  post.reply(comment)
@@ -161,12 +161,12 @@ while True:
       
       
       ### check if comment has links quotes or is previously processed
-      summary_call = bool(re.search("wikibot.*?tell me about",post.body.lower()))
-      summarize_call = bool(re.search("wikibot.*?summarize",post.body.lower()))
+      summary_call = bool(re.search("wikibot.*?tell .*? about",post.body.lower()))
+      summarize_call = bool(re.search("wikibot.*?summari.e",post.body.lower()))
       has_link = any(string in post.body for string in linkWords)
       if has_link or summary_call or summarize_call:
 	### check comment body quotes, skip if present
-	if re.search(r"&gt;", post.body):
+	if re.search(r"&gt;", post.body) and not summary_call and not summarize_call:
 	  already_done.append(post.id)
 	  #warn("Has quote")
 	  continue
@@ -180,6 +180,7 @@ while True:
 	  already_done.append(post.id)
 	  #warn("My comment")
 	  continue
+	### check if comment is by banned user, skip if it is
 	if post.author.name in banned_users:
 	  already_done.append(post.id)
 	  #warn("Banned user")
@@ -214,9 +215,9 @@ while True:
 	  special("SUMMARY CALL: %s"%post.id)
 	  bit_comment_start = "A summary from "
 	  if summary_call:
-	    post_body = re.sub('wikibot.*?tell me about','__BODYSPLIT__',post.body.lower())
+	    post_body = re.sub('wikibot.*?tell .*? about','__BODYSPLIT__',post.body.lower())
 	  else:
-	    post_body = re.sub('wikibot.*?summarize','__BODYSPLIT__',post.body.lower())
+	    post_body = re.sub('wikibot.*?summari.e','__BODYSPLIT__',post.body.lower())
 	  term = post_body.split('__BODYSPLIT__')[1].strip()
 	  log("TERM: %s"%term)
 	  try:
@@ -224,7 +225,7 @@ while True:
 	    after_split = title
 	    log("INTERPRETATION: %s"%title)
 	  except:
-	    log("INTERPRETATION FAIL: %s"%title)
+	    log("INTERPRETATION FAIL: %s"%term)
 	    summary_error = "*" + term + "? Couldn't find that.*"
 	    try:
 	      post.reply(summary_error)
@@ -255,18 +256,18 @@ while True:
 	  url_string_for_fetch = url_string_for_fetch[0:--(url_string_for_fetch.__len__()-1)]
 	
 	### check for subheading in url string, skip if present #TODO process subheading requests
-	if re.search(r"#",article_name):
+	if re.search(r"#",article_name) and not summarize_call and not summary_call:
 	  log("Links to subheading")
 	  continue
 	
 	### check if link is wikipedia namespace, skip if present
 	has_hash = re.search(r":",article_name) and not re.search(r": ",article_name)
-	if has_hash:
+	if has_hash and not summarize_call and not summary_call:
 	  log("Namespace link")
 	  continue
 
 	### check if article is a list, skip if it is
-	if re.search(r"List of.*",article_name):
+	if re.search(r"List of.*",article_name) and not summary_call and not summarize_call:
 	  log("Is a list")
 	  continue
 	

@@ -145,7 +145,7 @@ while True:
 	      continue
 	  else:
 	    msg.mark_as_unread()
-	  ### Add user to exclude list
+	  ### Add user to exclude list ###TODO remove user from exclusion list
 	  if re.search(excludekeyword, msg.body.lower()):
 	    with open('banned_users', 'a') as myfile:
 	      myfile.write("%s\n"%msg.author.name)
