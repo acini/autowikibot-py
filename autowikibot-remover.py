@@ -143,8 +143,7 @@ while True:
 		fail("%s\033[1;m"%e)
 	      #msg.mark_as_read()
 	      continue
-	  else:
-	    msg.mark_as_unread()
+	  
 	  ### Add user to exclude list ###TODO remove user from exclusion list
 	  if re.search(excludekeyword, msg.body.lower()):
 	    with open('banned_users', 'a') as myfile:

@@ -161,6 +161,7 @@ while True:
 	      if definition_text.__len__() < 200:
 		definition_text = wikipedia.summary(term,sentences=2,auto_suggest=False,redirect=True)
 	      definition_link = wikipedia.page(term,auto_suggest=False).url
+	      definition_link = definition_link_link.replace(')','\)')
 	      title = wikipedia.page(term,auto_suggest=False).title
 	      if bool(re.search(title,definition_text)):
 		definition = re.sub(title,"[**"+title+"**]("+definition_link+")",definition_text)
@@ -260,6 +261,7 @@ while True:
 		suggest = wikipedia.search(term,results=1)[0]
 		summary = wikipedia.summary(suggest,auto_suggest=False,redirect=True)
 		suggest_link = wikipedia.page(suggest).url
+		suggest_link = suggest_link.replace(')','\)')
 		suggest_with_link = "["+suggest+"]("+suggest_link+")"
 		summary = "*You mean,* **"+suggest_with_link+"**?\n\n---\n\n>"+summary+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(summon me!)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
 		log("SUGGESTING %s"%suggest)
@@ -275,7 +277,7 @@ while True:
 	    continue
 	else:
 	  log("LINK TRIGGER: %s"%post.permalink)
-	  bit_comment_start = "A bit from linked "
+	  bit_comment_start = "Here's a bit from linked "
 	
 	url_string = after_split
 	url_string_for_fetch = url_string.replace('_', '%20')
