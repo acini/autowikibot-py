@@ -126,17 +126,12 @@ while True:
 	continue
 	
       ### check if there is wikibot call
-      verb = re.compile('is|are')
       define_call = bool(re.search("wikibot.*?define",post.body.lower()))
-      whatis_call = bool(re.search("wikibot.*?wh.*? (is a|are the|is|are)",post.body.lower()))
-      if define_call or whatis_call:
+      if define_call:
 	already_done.append(post.id)
 	log("---------")
 	special("DEFINITION CALL: %s"%post.id)
-	if define_call:
-	  post_body = re.sub('wikibot.*?define','__BODYSPLIT__',post.body.lower())
-	else:
-	  post_body = re.sub('wikibot.*?wh.*? (is a|are the|is|are)','__BODYSPLIT__',post.body.lower())
+	post_body = re.sub('wikibot.*?define','__BODYSPLIT__',post.body.lower())
 	post_body = re.sub('\?','',post_body)
 	term = post_body.split('__BODYSPLIT__')[1].strip()
 	log("TERM: %s"%term)
@@ -151,26 +146,35 @@ while True:
 	  else:
 	    definition = "[**"+title+"**](" + definition_link + "): " + definition_text
 	  log("INTERPRETATION: %s"%title)
-	  comment = "*Here you go:*\n\n---\n\n>\n"+definition+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(smart commands)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
+	  comment = "*Here you go:*\n\n---\n\n>"+definition+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(summon me!)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
 	except Exception as e:
 	  if bool(re.search('.*may refer to:.*',str(e))):
-	    comment = "*Can you be a little specific, please?*\n\n---\n\n>\n"+str(e).replace('\n','\n\n>')+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(smart commands)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
+	    comment = "*Can you be a little specific, please?*\n\n---\n\n>\n"+str(e).replace('\n','\n\n>')+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(summon me!)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
 	    log("ASKING FOR DISAMBIGUATION")
 	  else:
 	    log("INTERPRETATION FAIL: %s"%term)
 	    try:
-	      suggest = wikipedia.search(term,results=1)[0]
-	      comment = "*" + term + "? Couldn't find that. Did you mean *"+suggest+"?\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(smart commands)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
-	      log("SUGGESTING %s",suggest)
+	      term = wikipedia.search(term,results=1)[0]
+	      definition_text = wikipedia.summary(term,sentences=1,auto_suggest=False,redirect=True)
+	      if definition_text.__len__() < 200:
+		definition_text = wikipedia.summary(term,sentences=2,auto_suggest=False,redirect=True)
+	      definition_link = wikipedia.page(term,auto_suggest=False).url
+	      title = wikipedia.page(term,auto_suggest=False).title
+	      if bool(re.search(title,definition_text)):
+		definition = re.sub(title,"[**"+title+"**]("+definition_link+")",definition_text)
+	      else:
+		definition = "[**"+title+"**](" + definition_link + "): " + definition_text
+	      comment = "*" + term + "? Couldn't find that. Did you mean* **"+term+"**?\n\n---\n\n>"+definition+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(summon me!)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
+	      log("SUGGESTING %s"%term)
 	    except:
-	      comment = "*" + term + "? Couldn't find that.\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(smart commands)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
+	      comment = "*" + term + "? Couldn't find that.\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(summon me!)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
 	      log("COULD NOT SUGGEST FOR %s",term)
 	    try:
 	      post.reply(comment)
 	      totalposted = totalposted + 1
-	      log("REPLY SUCCESSFUL")
+	      success("#%s REPLY SUCCESSFUL AT %s"%(totalposted,post.permalink))
 	    except Exception as e:
-	      warn("POST REPLY: %s @ %s"%(e,post.subreddit))# TODO add to badsubs on 403
+	      warn("REPLY FAILED: %s @ %s"%(e,post.subreddit))# TODO add to badsubs on 403
 	    continue
 	try:
 	  post.reply(comment)
@@ -181,12 +185,12 @@ while True:
       
       
       ### check if comment has links quotes or is previously processed
-      summary_call = bool(re.search("wikibot.*?tell .*? about",post.body.lower()))
-      summarize_call = bool(re.search("wikibot.*?summari.e",post.body.lower()))
+      tell_me_call = bool(re.search("wikibot.*?tell .*? about",post.body.lower()))
+      what_is_call = bool(re.search("wikibot.*?wh.*? (is a|are the|is|are)",post.body.lower()))
       has_link = any(string in post.body for string in linkWords)
-      if has_link or summary_call or summarize_call:
+      if has_link or tell_me_call or what_is_call:
 	### check comment body quotes, skip if present
-	if re.search(r"&gt;", post.body) and not summary_call and not summarize_call:
+	if re.search(r"&gt;", post.body) and not tell_me_call and not what_is_call:
 	  already_done.append(post.id)
 	  #warn("Has quote")
 	  continue
@@ -231,13 +235,13 @@ while True:
 	  pass
 	### If it is call for summary, pass variable to summary processor
 	log("---------")
-	if summary_call or summarize_call:
+	if tell_me_call or what_is_call:
 	  special("SUMMARY CALL: %s"%post.id)
 	  bit_comment_start = "A summary from "
-	  if summary_call:
+	  if tell_me_call:
 	    post_body = re.sub('wikibot.*?tell .*? about','__BODYSPLIT__',post.body.lower())
 	  else:
-	    post_body = re.sub('wikibot.*?summari.e','__BODYSPLIT__',post.body.lower())
+	    post_body = re.sub('wikibot.*?what is','__BODYSPLIT__',post.body.lower())
 	  term = post_body.split('__BODYSPLIT__')[1].strip()
 	  log("TERM: %s"%term)
 	  try:
@@ -246,23 +250,26 @@ while True:
 	    log("INTERPRETATION: %s"%title)
 	  except Exception as e:  
 	    if bool(re.search('.*may refer to:.*',str(e))):
-	      summary = "*Can you be a little specific, please?*\n\n---\n\n>\n"+str(e).replace('\n','\n\n>')+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(smart commands)](http://www.reddit.com/r/autowikibot/wiki/commandlist) ^| [^(flag for glitch)](http://www.reddit.com/message/compose?to=acini&subject=bot%20glitch&message=%0Acontext:"+post.permalink+")"
+	      summary = "*Can you be a little specific, please?*\n\n---\n\n>\n"+str(e).replace('\n','\n\n>')+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(summon me!)](http://www.reddit.com/r/autowikibot/wiki/commandlist) ^| [^(flag for glitch)](http://www.reddit.com/message/compose?to=acini&subject=bot%20glitch&message=%0Acontext:"+post.permalink+")"
 	      log("ASKING FOR DISAMBIGUATION")
 	    else:
 	      log("INTERPRETATION FAIL: %s"%term)
 	      try:
 		suggest = wikipedia.search(term,results=1)[0]
-		summary = "*" + term + "? Couldn't find that. Did you mean *"+suggest+"?\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(smart commands)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
-		log("SUGGESTING %s",suggest)
+		summary = wikipedia.summary(suggest,auto_suggest=False,redirect=True)
+		suggest_link = wikipedia.page(suggest).url
+		suggest = "["+suggest+"]("+suggest_link+")"
+		summary = "*" + term + "? Couldn't find that. Did you mean:* **"+suggest+"**?\n\n---\n\n>"+summary+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(summon me!)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
+		log("SUGGESTING %s"%suggest)
 	      except:
-		summary = "*" + term + "? Couldn't find that.\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(smart commands)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
+		summary = "*" + term + "? Couldn't find that.*\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(summon me!)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
 		log("COULD NOT SUGGEST FOR %s",term)  
 	    try:
 	      post.reply(summary)
 	      totalposted = totalposted + 1
-	      log("REPLY SUCCESSFUL")
+	      success("#%s REPLY SUCCESSFUL AT %s"%(totalposted,post.permalink))
 	    except Exception as e:
-	      warn("POST REPLY: %s @ %s"%(e,post.subreddit))# TODO add to badsubs on 403
+	      warn("REPLY FAILED: %s @ %s"%(e,post.subreddit))# TODO add to badsubs on 403
 	    continue
 	else:
 	  log("LINK TRIGGER: %s"%post.id)
@@ -287,18 +294,35 @@ while True:
 	  url_string_for_fetch = url_string_for_fetch[0:--(url_string_for_fetch.__len__()-1)]
 	
 	### check for subheading in url string, skip if present #TODO process subheading requests
-	if re.search(r"#",article_name) and not summarize_call and not summary_call:
-	  log("Links to subheading")
+	if re.search(r"#",article_name) and not what_is_call and not tell_me_call:
+	  pagename = article_name.split('#')[0]
+	  section = article_name.split('#')[1]
+	  log("TOPIC: %s"%pagename)
+	  log("LINKS TO SECTION: %s"%section)
+	  try:
+	    page = wikipedia.page(pagename)
+	    section = page.section(section)
+	    section = section.replace('\n','\n\n>')
+	    success("TEXT PACKAGED")
+	    comment = ("*Here's the linked section from Wikipedia article about* [***"+pagename+"***]("+page.url+") : \n\n---\n\n>"+section+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(summon me!)](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/) ^| [^(flag for glitch)](http://www.reddit.com/message/compose?to=acini&subject=bot%20glitch&message=%0Acontext:"+post.permalink+")")
+	    try:
+	      post.reply(comment)
+	      totalposted = totalposted + 1
+	      success("#%s REPLY SUCCESSFUL AT %s"%(totalposted,post.permalink))
+	    except Exception as e:
+	      warn("REPLY FAILED: %s @ %s"%(e,post.subreddit))# TODO add to badsubs on 403
+	  except:
+	    pass
 	  continue
 	
 	### check if link is wikipedia namespace, skip if present
 	has_hash = re.search(r":",article_name) and not re.search(r": ",article_name)
-	if has_hash and not summarize_call and not summary_call:
+	if has_hash and not what_is_call and not tell_me_call:
 	  log("Namespace link")
 	  continue
 
 	### check if article is a list, skip if it is
-	if re.search(r"List of.*",article_name) and not summary_call and not summarize_call:
+	if re.search(r"List of.*",article_name) and not tell_me_call and not what_is_call:
 	  log("Is a list")
 	  continue
 	
@@ -354,36 +378,36 @@ while True:
 	    data = soup.p.text                             #Post only first paragraph
 	except:
 	  fail("BAD DATA FETCHED")
-	  if summarize_call or summary_call:
+	  if what_is_call or tell_me_call:
 	    try:
-	      summary_text = wikipedia.summary(term,auto_suggest=False,redirect=True)
-	      summary_link = wikipedia.page(term,auto_suggest=False).url
+	      tell_me_text = wikipedia.summary(term,auto_suggest=False,redirect=True)
+	      tell_me_link = wikipedia.page(term,auto_suggest=False).url
 	      title = wikipedia.page(term,auto_suggest=False).title
-	      if bool(re.search(title,summary_text)):
-		summary = re.sub(title,"[**"+title+"**]("+summary_link+")",summary_text)
+	      if bool(re.search(title,tell_me_text)):
+		summary = re.sub(title,"[**"+title+"**]("+tell_me_link+")",tell_me_text)
 	      else:
-		summary = "[**"+title+"**](" + summary_link + "): " + summary_text 
+		summary = "[**"+title+"**](" + tell_me_link + "): " + tell_me_text 
 	      log("INTERPRETATION: %s"%title)
-	      comment = "*Here you go:*\n\n---\n\n>\n"+summary+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(smart commands)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
+	      comment = "*Here you go:*\n\n---\n\n>\n"+summary+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(summon me!)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
 	    except Exception as e:### TODO this code might not be required. Review.
 	      if bool(re.search('.*may refer to:.*',str(e))):
-		comment = "*Can you be a little specific, please?*\n\n---\n\n>\n"+str(e).replace('\n','\n\n>')+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(smart commands)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
+		comment = "*Can you be a little specific, please?*\n\n---\n\n>\n"+str(e).replace('\n','\n\n>')+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(summon me!)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
 		log("ASKING FOR DISAMBIGUATION")
 	      else:
 		log("INTERPRETATION FAIL: %s"%term)
 		try:
 		  suggest = wikipedia.search(term,results=1)[0]
-		  comment = "*" + term + "? Couldn't find that. Did you mean *"+suggest+"?\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(smart commands)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
-		  log("SUGGESTING %s",suggest)
+		  comment = "*" + term + "? Couldn't find that. Did you mean* **"+suggest+"**?\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(summon me!)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
+		  log("SUGGESTING %s"%suggest)
 		except:
-		  comment = "*" + term + "? Couldn't find that.\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(smart commands)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
+		  comment = "*" + term + "? Couldn't find that.\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(summon me!)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
 		  log("COULD NOT SUGGEST FOR %s",term)
 		try:
 		  post.reply(comment)
 		  totalposted = totalposted + 1
-		  log("REPLY SUCCESSFUL")
+		  success("#%s REPLY SUCCESSFUL AT %s"%(totalposted,post.permalink))
 		except Exception as e:
-		  warn("POST REPLY: %s @ %s"%(e,post.subreddit))# TODO add to badsubs on 403
+		  warn("REPLY FAILED: %s @ %s"%(e,post.subreddit))# TODO add to badsubs on 403
 		continue
 	  continue
 	data = strip_wiki(data)
@@ -446,14 +470,14 @@ while True:
 	### Add quotes for markdown
 	data = re.sub(r"PARABREAK_REDDITQUOTE", '\n\n>', data)
 	
-	post_markdown = ("*"+bit_comment_start+"Wikipedia article about* [***"+article_name_terminal+"***](http://en.wikipedia.org/wiki/"+url_string+") : \n\n---\n\n>"+data+"\n\n---"+image_markdown+"\n\n"+image_source_markdown+"[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(smart commands)](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/) ^| [^(flag for glitch)](http://www.reddit.com/message/compose?to=acini&subject=bot%20glitch&message=%0Acontext:"+post.permalink+")")
+	post_markdown = ("*"+bit_comment_start+"Wikipedia article about* [***"+article_name_terminal+"***](http://en.wikipedia.org/wiki/"+url_string+") : \n\n---\n\n>"+data+"\n\n---"+image_markdown+"\n\n"+image_source_markdown+"[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(summon me!)](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/) ^| [^(flag for glitch)](http://www.reddit.com/message/compose?to=acini&subject=bot%20glitch&message=%0Acontext:"+post.permalink+")")
 	### post
 	try:
 	  post.reply (post_markdown)
 	  totalposted = totalposted + 1
-	  success("#%s POST REPLY SUCCESSFUL AT %s"%(totalposted,post.permalink))
+	  success("#%s LINK REPLY SUCCESSFUL AT %s"%(totalposted,post.permalink))
 	except Exception as e:
-	  warn("POST REPLY: %s @ %s"%(e,sub))# TODO add to badsubs on 403
+	  warn("REPLY FAILED: %s @ %s"%(e,sub))# TODO add to badsubs on 403
 	  continue
 	recieved_banned_users = list(shared.get('banned_users')) #TODO communicate badsubs
 	banned_users = recieved_banned_users+banned_users
