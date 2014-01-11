@@ -161,7 +161,7 @@ while True:
 	    shared.set('banned_users',banned_users)
 	    success("BANNED /u/%s AT %s"%(msg.author.name,bot_comment.permalink))
 	  time.sleep(1)
-	time.sleep(60)
+	time.sleep(30)
       except KeyboardInterrupt:
 	with open('totaldeleted', 'w') as f:
 	  pickle.dump(deleted, f)
