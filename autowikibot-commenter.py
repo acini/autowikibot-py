@@ -124,13 +124,6 @@ while True:
       if post.id in already_done:
 	#warn("Previously processed")
 	continue
-      else:
-	### check if comment is from excluded subreddit, skip if it is
-	sub = post.subreddit
-	sublower = str(sub).lower()
-	if sublower in badsubs:
-	  #warn("Excluded sub")
-	  continue
 	
       ### check if there is wikibot call
       define_call = bool(re.search("wikibot.*?define",post.body.lower()))
@@ -140,15 +133,15 @@ while True:
 	log("---------")
 	special("DEFINITION CALL: %s"%post.id)
 	if define_call:
-	  post_body = re.sub('wikibot.*?define','',post.body.lower())
+	  post_body = re.sub('wikibot.*?define','__BODYSPLIT__',post.body.lower())
 	else:
-	  post_body = re.sub('wikibot.*?what is','',post.body.lower())
+	  post_body = re.sub('wikibot.*?what is','__BODYSPLIT__',post.body.lower())
 	post_body = re.sub('\?','',post_body)
-	term = post_body.split(',')[0].strip()
+	term = post_body.split('__BODYSPLIT__')[1].strip()
 	log("TERM: %s"%term)
 	try:
 	  definition_text = wikipedia.summary(term,sentences=1,auto_suggest=True,redirect=True)
-	  definition_link = wikipedia.page(term).title
+	  definition_link = wikipedia.page(term).url
 	  title = wikipedia.page(term).title
 	  if bool(re.search(title,definition_text)):
 	    definition = re.sub(title,"[**"+title+"**]("+definition_link+")",definition_text)
@@ -164,7 +157,7 @@ while True:
 	  totalposted = totalposted + 1
 	  success("#%s CALL REPLY SUCCESSFUL AT %s"%(totalposted,post.permalink))
 	except Exception as e:
-	  warn("CALL REPLY: %s @ %s"%(e,sub))# TODO add to badsubs on 403
+	  warn("CALL REPLY: %s @ %s"%(e,post.subreddit))# TODO add to badsubs on 403
       
       
       ### check if comment has links quotes or is previously processed
@@ -192,6 +185,13 @@ while True:
 	  #warn("Banned user")
 	  continue
 	
+	### check if comment is from excluded subreddit, skip if it is
+	sub = post.subreddit
+	sublower = str(sub).lower()
+	if sublower in badsubs:
+	  #warn("Excluded sub")
+	  continue
+	
 	### Proceed with processing as minumum criteria are satisfied.
 	already_done.append(post.id)
 	
@@ -214,10 +214,10 @@ while True:
 	  special("SUMMARY CALL: %s"%post.id)
 	  bit_comment_start = "A summary from "
 	  if summary_call:
-	    post_body = re.sub('wikibot.*?tell me about','',post.body.lower())
+	    post_body = re.sub('wikibot.*?tell me about','__BODYSPLIT__',post.body.lower())
 	  else:
-	    post_body = re.sub('wikibot.*?summarize','',post.body.lower())
-	  term = post_body.split(',')[0].strip()
+	    post_body = re.sub('wikibot.*?summarize','__BODYSPLIT__',post.body.lower())
+	  term = post_body.split('__BODYSPLIT__')[1].strip()
 	  log("TERM: %s"%term)
 	  try:
 	    title = wikipedia.page(term).title
@@ -230,7 +230,7 @@ while True:
 	      post.reply(summary_error)
 	      totalposted = totalposted + 1
 	    except Exception as e:
-	      warn("POST REPLY: %s @ %s"%(e,sub))# TODO add to badsubs on 403
+	      warn("POST REPLY: %s @ %s"%(e,post.subreddit))# TODO add to badsubs on 403
 	      continue
 	else:
 	  log("LINK TRIGGER: %s"%post.id)
@@ -256,18 +256,18 @@ while True:
 	
 	### check for subheading in url string, skip if present #TODO process subheading requests
 	if re.search(r"#",article_name):
-	  #warn("Links to subheading")
+	  log("Links to subheading")
 	  continue
 	
 	### check if link is wikipedia namespace, skip if present
 	has_hash = re.search(r":",article_name) and not re.search(r": ",article_name)
 	if has_hash:
-	  #warn("Namespace link")
+	  log("Namespace link")
 	  continue
 
 	### check if article is a list, skip if it is
 	if re.search(r"List of.*",article_name):
-	  #warn("Is a list")
+	  log("Is a list")
 	  continue
 	
 	### fetch data from wikipedia
@@ -383,7 +383,7 @@ while True:
 	### Add quotes for markdown
 	data = re.sub(r"PARABREAK_REDDITQUOTE", '\n\n>', data)
 	
-	post_markdown = ("*"+bit_comment_start+"Wikipedia article about* [***"+article_name_terminal+"***](http://en.wikipedia.org/wiki/"+url_string+") : \n\n---\n\n>"+data+"\n\n---"+image_markdown+"\n\n"+image_source_markdown+"[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(smart commands)](http://www.reddit.com/r/autowikibot/wiki/commandlist) ^| [^(flag for glitch)](http://www.reddit.com/message/compose?to=acini&subject=bot%20glitch&message=%0Acontext:"+post.permalink+")")
+	post_markdown = ("*"+bit_comment_start+"Wikipedia article about* [***"+article_name_terminal+"***](http://en.wikipedia.org/wiki/"+url_string+") : \n\n---\n\n>"+data+"\n\n---"+image_markdown+"\n\n"+image_source_markdown+"[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(smart commands)](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/) ^| [^(flag for glitch)](http://www.reddit.com/message/compose?to=acini&subject=bot%20glitch&message=%0Acontext:"+post.permalink+")")
 	### post
 	try:
 	  post.reply (post_markdown)
