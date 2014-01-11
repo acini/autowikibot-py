@@ -126,8 +126,9 @@ while True:
 	continue
 	
       ### check if there is wikibot call
+      verb = re.compile('is|are')
       define_call = bool(re.search("wikibot.*?define",post.body.lower()))
-      whatis_call = bool(re.search("wikibot.*?wh.*? is",post.body.lower()))
+      whatis_call = bool(re.search("wikibot.*?wh.*? (is|are)",post.body.lower()))
       if define_call or whatis_call:
 	already_done.append(post.id)
 	log("---------")
@@ -135,7 +136,7 @@ while True:
 	if define_call:
 	  post_body = re.sub('wikibot.*?define','__BODYSPLIT__',post.body.lower())
 	else:
-	  post_body = re.sub('wikibot.*?wh.*? is','__BODYSPLIT__',post.body.lower())
+	  post_body = re.sub('wikibot.*?wh.*? (is|are)','__BODYSPLIT__',post.body.lower())
 	post_body = re.sub('\?','',post_body)
 	term = post_body.split('__BODYSPLIT__')[1].strip()
 	log("TERM: %s"%term)
