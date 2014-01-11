@@ -2,6 +2,10 @@
 import praw, time, re, pickle, traceback, os, memcache
 from util import success, warn, log, fail
 
+### Uncomment to debug
+#import logging
+#logging.basicConfig(level=logging.DEBUG)
+
 ### Set root directory to script directory
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
@@ -120,8 +124,8 @@ while True:
 	    try:
 	      bot_comment_id = msg.parent_id
 	      bot_comment = r.get_info(thing_id=bot_comment_id)
+	      bot_comment_parent = r.get_info(thing_id=bot_comment.parent_id)
 	      if bot_comment.author.name == USERNAME:
-		bot_comment_parent = r.get_info(thing_id=bot_comment.parent_id)
 		if msg.author.name == bot_comment_parent.author.name:
 		  bot_comment.delete()
 		  deleted = deleted + 1
@@ -141,10 +145,10 @@ while True:
 		success("AUTODELETION (ORPHAN) AT %s"%bot_comment_parent.permalink)
 	      else:
 		fail("%s\033[1;m"%e)
-	      #msg.mark_as_read()
+	      msg.mark_as_read()
 	      continue
-	  
-	  ### Add user to exclude list ###TODO remove user from exclusion list
+
+	      ### Add user to exclude list ###TODO remove user from exclusion list
 	  if re.search(excludekeyword, msg.body.lower()):
 	    with open('banned_users', 'a') as myfile:
 	      myfile.write("%s\n"%msg.author.name)
@@ -159,7 +163,6 @@ while True:
 	    banned_users.append(msg.author.name)
 	    shared.set('banned_users',banned_users)
 	    success("BANNED /u/%s AT %s"%(msg.author.name,bot_comment.permalink))
-	  time.sleep(1)
 	time.sleep(30)
       except KeyboardInterrupt:
 	with open('totaldeleted', 'w') as f:

@@ -11,7 +11,7 @@ Bot that comments on reddit comments with excerpt from linked wikipedia article.
 Features
 ========
 
-* Responds to comments like "wikibot, what is dancing?", "wikibot, define acculturation", "wikibot, tell me about enigma machine", "wikibot, summarize geisha culture"
+* Responds to comments like "wikibot, what is dancing?", "wikibot, define acculturation", "wikibot, tell me about enigma machine"
 * Commenting on comments having single wikipedia link
 * Deletion on request by parent commenter
 * Deletion on comment score below threshold

@@ -20,3 +20,6 @@ def success(*args):
     
 def special(*args):
     print '\033[95m'+apply(formatted,args)+'\033[0m'
+    
+def bluelog(*args):
+    print '\033[94m'+apply(formatted,args)+'\033[0m'

@@ -2,7 +2,7 @@
 ### TODO integrate wikipedia with url_string extraction
 
 import praw, time, datetime, re, urllib, urllib2, pickle, pyimgur, os, traceback, memcache, wikipedia
-from util import success, warn, log, fail, special
+from util import success, warn, log, fail, special, bluelog
 from bs4 import BeautifulSoup
 from HTMLParser import HTMLParser
 ### Uncomment to debug
@@ -44,6 +44,16 @@ def strip_wiki(wiki):
   wiki = re.sub("\( listen\)", '', wiki)
   return wiki
 
+def process_brackets_links(string):
+  string = ("%s)"%string)
+  string = string.replace("\\", "")
+  return string
+
+def process_brackets_syntax(string):
+  string = string.replace("\\", "")
+  string = ("%s\)"%string)
+  return string
+  
 def file_warning():
   fail("One or more of data files is not found or is corrupted.")
   log("Have them configured as follows:")
@@ -131,7 +141,7 @@ while True:
       define_call = bool(re.search("wikibot.*?define",post.body.lower()))
       if define_call:
 	already_done.append(post.id)
-	log("---------")
+	log("__________________________________________________")
 	special("DEFINITION CALL: %s"%post.permalink)
 	post_body = re.sub('wikibot.*?define','__BODYSPLIT__',post.body.lower())
 	post_body = re.sub('\?','',post_body)
@@ -236,16 +246,17 @@ while True:
 	    after_split = after_split.split(")")[0]
 	except:
 	  pass
+	
 	### If it is call for summary, pass variable to summary processor
-	log("---------")
+	log("__________________________________________________")
 	if tell_me_call or what_is_call:
 	  special("SUMMARY CALL: %s"%post.permalink)
 	  bit_comment_start = "A summary from "
 	  if tell_me_call:
 	    post_body = re.sub('wikibot.*?tell .*? about','__BODYSPLIT__',post.body.lower())
 	  else:
-	    post_body = re.sub('wikibot.*?what is','__BODYSPLIT__',post.body.lower())
-	  term = post_body.split('__BODYSPLIT__')[1].strip()
+	    post_body = re.sub('wikibot.*?wh.*? (is a|are the|is|are)','__BODYSPLIT__',post.body.lower())
+	  term = post_body.split('__BODYSPLIT__')[1].strip(' |?')
 	  log("TERM: %s"%term)
 	  try:
 	    title = wikipedia.page(term,auto_suggest=False).title
@@ -267,11 +278,11 @@ while True:
 		log("SUGGESTING %s"%suggest)
 	      except:
 		summary = "*" + term + "? Sorry, couldn't find that.*\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(summon me!)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
-		log("COULD NOT SUGGEST FOR %s",term)  
+		log("COULD NOT SUGGEST FOR %s"%term)  
 	    try:
 	      post.reply(summary)
 	      totalposted = totalposted + 1
-	      success("#%s REPLY SUCCESSFUL AT %s"%(totalposted,post.permalink))
+	      success("#%s REPLY SUCCESSFUL"%totalposted)
 	    except Exception as e:
 	      warn("REPLY FAILED: %s @ %s"%(e,post.subreddit))# TODO add to badsubs on 403
 	    continue
@@ -286,11 +297,10 @@ while True:
 	
 	### url string correction for brackets
 	if re.search(r"[(]", url_string_for_fetch):
-	  url_string_for_fetch = ("%s)"%url_string_for_fetch)
-	  url_string_for_fetch = url_string_for_fetch.replace("\\", "")
-	  article_name = ("%s)"%article_name)
-	  url_string = url_string.replace("\\", "")
-	  url_string = ("%s\)"%url_string)
+	  url_string_for_fetch = process_brackets_links(url_string_for_fetch)
+	  if not re.search(r"[(]", url_string_for_fetch):
+	    article_name = ("%s)"%article_name)
+	  url_string = process_brackets_syntax(url_string)
 	
 	
 	### In case user comments like "/wiki/Article.", remove last 1 letter
@@ -300,25 +310,39 @@ while True:
 	### check for subheading in url string, skip if present #TODO process subheading requests
 	if re.search(r"#",article_name) and not what_is_call and not tell_me_call:
 	  pagename = article_name.split('#')[0]
+	  if re.search('\)',pagename):
+	    pagename = process_brackets_links(pagename)
+	  pagename = urllib.unquote(pagename)
 	  sectionname = article_name.split('#')[1]
-	  log("TOPIC: %s"%pagename)
-	  log("LINKS TO SECTION: %s"%sectionname)
+	  if re.search('\)',sectionname):
+	    sectionname = sectionname.replace(')','')
+	    sectionname = sectionname.replace('\\','')
+	  sectionname = sectionname.strip().replace('[.]','%')
+	  sectionname = urllib.unquote(sectionname)
+	  bluelog("TOPIC: %s"%pagename)
+	  bluelog("LINKS TO SECTION: %s"%sectionname)
 	  try:
 	    page = wikipedia.page(pagename)
 	    section = page.section(sectionname)
-	    sectionname = sectionname.replace(' ','_')
+	    if section == None or str(section.encode('utf-8')).strip() == "":
+	      raise Exception("SECTION RETURNED EMPTY")
+	    sectionname = sectionname.replace('_',' ')
 	    link = page.url+"#"+sectionname
+	    link = link.replace(')','\)')
+	    page_url = page.url.replace(')','\)')
 	    section = section.replace('\n','\n\n>')
 	    success("TEXT PACKAGED")
-	    comment = ("*Here's the [linked section]("+link+") from Wikipedia* : \n\n---\n\n>"+section+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(summon me!)](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/) ^| [^(flag for glitch)](http://www.reddit.com/message/compose?to=acini&subject=bot%20glitch&message=%0Acontext:"+post.permalink+")")
+	    comment = ("*Here's the linked section ["+sectionname+"]("+link+") from Wikipedia article ["+page.title+"]("+page_url+")* : \n\n---\n\n>"+section+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(summon me!)](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/) ^| [^(flag for glitch)](http://www.reddit.com/message/compose?to=acini&subject=bot%20glitch&message=%0Acontext:"+post.permalink+")")
 	    try:
 	      post.reply(comment)
 	      totalposted = totalposted + 1
-	      success("#%s REPLY SUCCESSFUL AT %s"%(totalposted,post.permalink))
+	      success("#%s REPLY SUCCESSFUL"%totalposted)
 	    except Exception as e:
 	      warn("REPLY FAILED: %s @ %s"%(e,post.subreddit))# TODO add to badsubs on 403
-	  except:
-	    pass
+	  except Exception as e:
+	    traceback.print_exc()
+	    warn("SECTION PROCESSING: %s @ %s"%(e,post.subreddit))
+	    continue
 	  continue
 	
 	### check if link is wikipedia namespace, skip if present
@@ -411,7 +435,7 @@ while True:
 		try:
 		  post.reply(comment)
 		  totalposted = totalposted + 1
-		  success("#%s REPLY SUCCESSFUL AT %s"%(totalposted,post.permalink))
+		  success("#%s REPLY SUCCESSFUL"%totalposted)
 		except Exception as e:
 		  warn("REPLY FAILED: %s @ %s"%(e,post.subreddit))# TODO add to badsubs on 403
 		continue
@@ -471,7 +495,7 @@ while True:
 	except Exception as e:
 	  image_markdown = ""
 	  image_source_markdown = ""
-	  log(e)
+	  log("IMAGE: %s"%str(e).strip().replace('\n',''))
 	
 	### Add quotes for markdown
 	data = re.sub(r"PARABREAK_REDDITQUOTE", '\n\n>', data)
@@ -484,7 +508,7 @@ while True:
 	try:
 	  post.reply (post_markdown)
 	  totalposted = totalposted + 1
-	  success("#%s LINK REPLY SUCCESSFUL AT %s"%(totalposted,post.permalink))
+	  success("#%s LINK REPLY SUCCESSFUL"%totalposted)
 	except Exception as e:
 	  warn("REPLY FAILED: %s @ %s"%(e,sub))# TODO add to badsubs on 403
 	  continue
