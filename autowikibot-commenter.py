@@ -166,7 +166,7 @@ while True:
 		definition = re.sub(title,"[**"+title+"**]("+definition_link+")",definition_text)
 	      else:
 		definition = "[**"+title+"**](" + definition_link + "): " + definition_text
-	      comment = "*Sorry, did you mean* **"+term+"**?\n\n---\n\n>"+definition+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(summon me!)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
+	      comment = "*You mean,* **"+term+"**?\n\n---\n\n>"+definition+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(summon me!)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
 	      log("SUGGESTING %s"%term)
 	    except:
 	      comment = "*" + term + "? Couldn't find that.\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(summon me!)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
@@ -260,8 +260,8 @@ while True:
 		suggest = wikipedia.search(term,results=1)[0]
 		summary = wikipedia.summary(suggest,auto_suggest=False,redirect=True)
 		suggest_link = wikipedia.page(suggest).url
-		suggest = "["+suggest+"]("+suggest_link+")"
-		summary = "*Sorry, did you mean:* **"+suggest+"**?\n\n---\n\n>"+summary+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(summon me!)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
+		suggest_with_link = "["+suggest+"]("+suggest_link+")"
+		summary = "*You mean,* **"+suggest_with_link+"**?\n\n---\n\n>"+summary+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(summon me!)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
 		log("SUGGESTING %s"%suggest)
 	      except:
 		summary = "*" + term + "? Sorry, couldn't find that.*\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(summon me!)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
@@ -401,7 +401,7 @@ while True:
 		log("INTERPRETATION FAIL: %s"%term)
 		try:
 		  suggest = wikipedia.search(term,results=1)[0]
-		  comment = "*Sorry, did you mean* **"+suggest+"**?\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(summon me!)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
+		  comment = "*You mean,* **"+suggest+"**?\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(summon me!)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
 		  log("SUGGESTING %s"%suggest)
 		except:
 		  comment = "*" + term + "? Sorry, couldn't find that.\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(summon me!)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
