@@ -35,6 +35,9 @@ def strip_tags(html):
 def reddify(html):
   html = html.replace('<b>', '**')
   html = html.replace('</b>', '**')
+  html = re.sub('<sup>','^',html)
+  html = re.sub('<sup.*?>','',html)
+  html = html.replace('</sup>', '')
   #html = html.replace('<i>', '*')
   #html = html.replace('</i>', '*')
   return html
@@ -317,7 +320,7 @@ while True:
 	  if re.search('\)',sectionname):
 	    sectionname = sectionname.replace(')','')
 	    sectionname = sectionname.replace('\\','')
-	  sectionname = sectionname.strip().replace('[.]','%')
+	  sectionname = sectionname.strip().replace('.','%')
 	  sectionname = urllib.unquote(sectionname)
 	  bluelog("TOPIC: %s"%pagename)
 	  bluelog("LINKS TO SECTION: %s"%sectionname)
@@ -332,7 +335,9 @@ while True:
 	    page_url = page.url.replace(')','\)')
 	    section = section.replace('\n','\n\n>')
 	    success("TEXT PACKAGED")
-	    comment = ("*Here's the linked section ["+sectionname+"]("+link+") from Wikipedia article ["+page.title+"]("+page_url+")* : \n\n---\n\n>"+section+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(summon me!)](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/) ^| [^(flag for glitch)](http://www.reddit.com/message/compose?to=acini&subject=bot%20glitch&message=%0Acontext:"+post.permalink+")")
+	    if section.__len__() > 3000:
+	      raise Exception("SECTION TOO LONG")
+	    comment = ("*Here's the linked section ["+sectionname+"]("+link+") from Wikipedia article ["+page.title+"]("+page_url+")* : \n\n---\n\n>"+section+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(summon me!)](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/)")
 	    try:
 	      post.reply(comment)
 	      totalposted = totalposted + 1
@@ -340,8 +345,8 @@ while True:
 	    except Exception as e:
 	      warn("REPLY FAILED: %s @ %s"%(e,post.subreddit))# TODO add to badsubs on 403
 	  except Exception as e:
-	    traceback.print_exc()
-	    warn("SECTION PROCESSING: %s @ %s"%(e,post.subreddit))
+	    #traceback.print_exc()
+	    warn("SECTION PROCESSING: %s"%e)
 	    continue
 	  continue
 	
@@ -398,7 +403,7 @@ while True:
 	### Replace <!-- with </p> to get only first paragraph instead of full introduction
 	### Not using xml parsing because tables etc. will need processing anyway
 	try:
-	  if soup.p.text.__len__() < 300 or soup.p.text.endswith(':'):
+	  if soup.p.text.__len__() < 500 or soup.p.text.endswith(':'):
 	    all_p = soup.find_all('p')
 	    wt = ""
 	    for idx, val in enumerate(all_p):
