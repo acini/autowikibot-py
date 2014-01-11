@@ -114,7 +114,7 @@ while True:
 
     ### Check inbox 15 times
     log("AUTODELETE CYCLES STARTED")
-    for x in range(1, 6):
+    for x in range(1, 11):
       log("CYCLE %s"%x)
       try:
 	unread = r.get_unread(limit=None)
@@ -163,7 +163,7 @@ while True:
 	    banned_users.append(msg.author.name)
 	    shared.set('banned_users',banned_users)
 	    success("BANNED /u/%s AT %s"%(msg.author.name,bot_comment.permalink))
-	time.sleep(30)
+	time.sleep(60)
       except KeyboardInterrupt:
 	with open('totaldeleted', 'w') as f:
 	  pickle.dump(deleted, f)
