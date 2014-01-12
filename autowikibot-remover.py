@@ -126,7 +126,7 @@ while True:
 	      bot_comment = r.get_info(thing_id=bot_comment_id)
 	      bot_comment_parent = r.get_info(thing_id=bot_comment.parent_id)
 	      if bot_comment.author.name == USERNAME:
-		if msg.author.name == bot_comment_parent.author.name:
+		if msg.author.name == bot_comment_parent.author.name or now - int(c.created) > 86400:
 		  bot_comment.delete()
 		  deleted = deleted + 1
 		  success("AUTODELETION AT %s"%bot_comment_parent.permalink)

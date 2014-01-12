@@ -34,10 +34,10 @@ def strip_tags(html):
 
 def reddify(html):
   html = html.replace('<b>', '**')
-  html = html.replace('</b>', '**')
+  html = html.replace('</b>', '** ')
   html = re.sub('<sup>','^',html)
   html = re.sub('<sup.*?>','',html)
-  html = html.replace('</sup> ', '')
+  html = html.replace('</sup>','')
   #html = html.replace('<i>', '*')
   #html = html.replace('</i>', '*')
   return html
@@ -270,7 +270,7 @@ while True:
 	log("__________________________________________________")
 	if tell_me_call or what_is_call:
 	  special("SUMMARY CALL: %s"%post.permalink)
-	  bit_comment_start = "A summary from "
+	  bit_comment_start = ""
 	  if tell_me_call:
 	    post_body = re.sub('wikibot.*?tell .*? about ','__BODYSPLIT__',post.body.lower())
 	  else:
@@ -319,7 +319,7 @@ while True:
 	    continue
 	else:
 	  log("LINK TRIGGER: %s"%post.permalink)
-	  bit_comment_start = "Here's a bit from linked "
+	  bit_comment_start = "*Here's a bit from linked Wikipedia article about*"
 	
 	url_string = after_split
 	url_string_for_fetch = url_string.replace('_', '%20')
@@ -562,7 +562,7 @@ while True:
 	  image_source_markdown = ""
 	  log("IMAGE: %s"%str(e).strip().replace('\n',''))
 	
-	post_markdown = ("*"+bit_comment_start+"Wikipedia article about* [***"+article_name_terminal+"***](http://en.wikipedia.org/wiki/"+url_string+") : \n\n---\n\n>"+data+"\n\n---"+image_markdown+"\n\n"+image_source_markdown+"[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(**call me**: wikibot, what is something?)](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/) ^| [^(flag for glitch)](http://www.reddit.com/message/compose?to=/r/autowikibot&subject=bot%20glitch&message=%0Acontext:"+post.permalink+")")
+	post_markdown = (bit_comment_start+" [***"+article_name_terminal+"***](http://en.wikipedia.org/wiki/"+url_string+") : \n\n---\n\n>"+data+"\n\n---"+image_markdown+"\n\n"+image_source_markdown+"[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(**call me**: wikibot, what is something?)](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/) ^| [^(flag for glitch)](http://www.reddit.com/message/compose?to=/r/autowikibot&subject=bot%20glitch&message=%0Acontext:"+post.permalink+")")
 	### post
 	try:
 	  post.reply (post_markdown)
