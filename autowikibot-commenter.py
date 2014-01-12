@@ -374,7 +374,7 @@ while True:
 	    except Exception as e:
 	      warn("REPLY FAILED: %s @ %s"%(e,post.subreddit))# TODO add to badsubs on 403
 	  except Exception as e:
-	    traceback.print_exc()
+	    #traceback.print_exc()
 	    warn("SECTION PROCESSING: %s"%e)
 	    continue
 	  continue
@@ -528,6 +528,7 @@ while True:
 	  
 	  ### Extract caption from already fetched sectiondata
 	  try:
+	    pic_markdown = "Related Picture"
 	    if globalsoup.find("div", { "class" : "thumbcaption" }):
 	      caption_div = globalsoup.find("div", { "class" : "thumbcaption" })
 	    else:
@@ -544,11 +545,12 @@ while True:
 	    caption = re.sub(r' ',' ^',caption)
 	    if caption != "":
 	      caption_markdown = (" ^- **^"+caption+"**")
+	      pic_markdown = "Picture"
 	      success("CAPTION PACKAGED")
 	  except Exception as e:
 	    caption_markdown = ""
 	    log(e)
-	  image_markdown = ("\n\n[^(**Picture**)]("+uploaded_image.link+")"+caption_markdown)
+	  image_markdown = ("\n\n[^(**"+pic_markdown+"**)]("+uploaded_image.link+")"+caption_markdown)
 	  success("IMAGE PACKAGED VIA %s"%uploaded_image.link)
 	except Exception as e:
 	  image_markdown = ""
