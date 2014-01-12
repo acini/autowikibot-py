@@ -37,7 +37,7 @@ def reddify(html):
   html = html.replace('</b>', '**')
   html = re.sub('<sup>','^',html)
   html = re.sub('<sup.*?>','',html)
-  html = html.replace('</sup>', '')
+  html = html.replace('</sup> ', '')
   #html = html.replace('<i>', '*')
   #html = html.replace('</i>', '*')
   return html
@@ -230,7 +230,7 @@ while True:
       
       ### check if comment has links quotes or is previously processed
       tell_me_call = bool(re.search("wikibot.*?tell .*? about",post.body.lower()))
-      what_is_call = bool(re.search("wikibot.*?wh.*? (is|are)",post.body.lower()))
+      what_is_call = bool(re.search("wikibot.*?wh.*?(\'s|is|are)",post.body.lower()))
       has_link = any(string in post.body for string in linkWords)
       if has_link or tell_me_call or what_is_call:
 	### check comment body quotes, skip if present
@@ -272,9 +272,9 @@ while True:
 	  special("SUMMARY CALL: %s"%post.permalink)
 	  bit_comment_start = "A summary from "
 	  if tell_me_call:
-	    post_body = re.sub('wikibot.*?tell .*? about','__BODYSPLIT__',post.body.lower())
+	    post_body = re.sub('wikibot.*?tell .*? about ','__BODYSPLIT__',post.body.lower())
 	  else:
-	    post_body = re.sub('wikibot.*?wh.*? (is|are) ','__BODYSPLIT__',post.body.lower())
+	    post_body = re.sub('wikibot.*?wh.*?(\'s|is|are) ','__BODYSPLIT__',post.body.lower())
 	  term = post_body.split('__BODYSPLIT__')[1]
 	  term = re.sub('\?','',term)
 	  try:
@@ -294,7 +294,7 @@ while True:
 		deflist = deflist + "\n\n>" + wikipedia.summary(val,auto_suggest=True,sentences=1)
 		if idx > 3:
 		  break
-	      summary = "*Can you be a little specific, please? There's too many of "+term.strip()+"*\n\n---\n\n>\n"+str(e).replace('\n','\n\n>')+"\n\n---"+deflist+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(**call me**: wikibot, what is something?)](http://www.reddit.com/r/autowikibot/wiki/commandlist) ^| [^(flag for glitch)](http://www.reddit.com/message/compose?to=acini&subject=bot%20glitch&message=%0Acontext:"+post.permalink+")"
+	      summary = "*Can you be a little specific, please? There's too many of \""+term.strip()+"\".*\n\n---"+deflist+"\n\n---\n\n"+str(e).replace('\n','\n\n>')+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(**call me**: wikibot, what is something?)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
 	      log("ASKING FOR DISAMBIGUATION")
 	    else:
 	      log("INTERPRETATION FAIL: %s"%filter(lambda x: x in string.printable, term))
@@ -363,9 +363,9 @@ while True:
 	    page_url = page.url.replace(')','\)')
 	    section = section.replace('\n','\n\n>')
 	    success("TEXT PACKAGED")
-	    if section.__len__() > 3000:
-	      log("SECTION CUT AT 3000 CHARACTERS")
-	      section = split_by_length(section,3000)[0]+" ... \n\n`(Section too large, cut at 3000 characters)`"
+	    if section.__len__() > 3500:
+	      log("SECTION CUT AT 3500 CHARACTERS")
+	      section = split_by_length(section,3500)[0]+" ... \n\n>`(Section too large, cut at 3500 characters)`"
 	    comment = ("*Here's the linked section ["+sectionname+"]("+link+") from Wikipedia article ["+page.title+"]("+page_url+")* : \n\n---\n\n>"+section+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(**call me**: wikibot, what is something?)](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/)")
 	    try:
 	      post.reply(comment)
@@ -458,7 +458,11 @@ while True:
 	      if re.search(r'#',title):
 		summary = wikipedia.page(title.split('#')[0]).section(title.split('#')[1])
 		if summary == None or str(filter(lambda x: x in string.printable, summary)).strip() == "":
-		  summary = "Sorry, I failed to fetch the section, but here's the link: "+wikipedia.page(title.split('#')[0]).url+"#"+title.split('#')[1]
+		  page_url = wikipedia.page(title.split('#')[0]).url
+		  
+		  summary = "Sorry, I failed to fetch the section, but here's the link: "+page_url+"#"+title.split('#')[1]
+	      if re.search(r'(',page_url):
+		page_url = process_brackets_links(page_url)
 	      comment = "*Here you go:*\n\n---\n\n>\n"+summary+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(**call me**: wikibot, what is something?)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
 	      try:
 		post.reply(comment)
@@ -475,7 +479,8 @@ while True:
 		log("INTERPRETATION FAIL: %s"%term)
 		try:
 		  suggest = wikipedia.search(term,results=1)[0]
-		  comment = "*You mean,* **"+suggest+"**?\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(**call me**: wikibot, what is something?)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
+		  trialsummary = wikipedia.summary(suggest,auto_suggest=True)
+		  comment = "*You mean,* **"+suggest+"**?\n\n---\n\n>"+trialsummary+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(**call me**: wikibot, what is something?)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
 		  log("SUGGESTING %s"%suggest)
 		except:
 		  comment = "*" + term + "? Sorry, couldn't find that.\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(**call me**: wikibot, what is something?)](http://www.reddit.com/r/autowikibot/wiki/commandlist)"
@@ -497,7 +502,7 @@ while True:
 	
 	if data.__len__() > 1500:
 	  log("TEXT CUT AT 1500 CHARACTERS")
-	  data = split_by_length(data,1500)[0]+" ... \n`(Introduction too large, cut at 1500 characters)`"
+	  data = split_by_length(data,1500)[0]+" ... \n\n>`(Introduction too large, cut at 1500 characters)`"
 	
 	if data.__len__() < 50:
 	  continue
@@ -557,7 +562,7 @@ while True:
 	  image_source_markdown = ""
 	  log("IMAGE: %s"%str(e).strip().replace('\n',''))
 	
-	post_markdown = ("*"+bit_comment_start+"Wikipedia article about* [***"+article_name_terminal+"***](http://en.wikipedia.org/wiki/"+url_string+") : \n\n---\n\n>"+data+"\n\n---"+image_markdown+"\n\n"+image_source_markdown+"[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(**call me**: wikibot, what is something?)](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/) ^| [^(flag for glitch)](http://www.reddit.com/message/compose?to=acini&subject=bot%20glitch&message=%0Acontext:"+post.permalink+")")
+	post_markdown = ("*"+bit_comment_start+"Wikipedia article about* [***"+article_name_terminal+"***](http://en.wikipedia.org/wiki/"+url_string+") : \n\n---\n\n>"+data+"\n\n---"+image_markdown+"\n\n"+image_source_markdown+"[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| [^(**call me**: wikibot, what is something?)](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/) ^| [^(flag for glitch)](http://www.reddit.com/message/compose?to=/r/autowikibot&subject=bot%20glitch&message=%0Acontext:"+post.permalink+")")
 	### post
 	try:
 	  post.reply (post_markdown)
