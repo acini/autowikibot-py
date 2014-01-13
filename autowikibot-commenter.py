@@ -114,6 +114,10 @@ def filterpass(post):
       return False
     elif str(post.subreddit) in badsubs:
       return False
+    elif re.search(r":",post.body) and not re.search(r": ",post.body):
+      return False
+    elif re.search(r"List of.*",post.body):
+      return False
     else:
       return True
 
@@ -148,31 +152,40 @@ def process_summary_call(post):
   log("TERM: %s"%filter(lambda x: x in string.printable, term))
   try:
     title = wikipedia.page(term,auto_suggest=False).title
+    if re.search(r'#',title):
+      url = wikipedia.page(title.split('#')[0],auto_suggest=False).url
+      sectionurl =  url + "#" + title.split('#')[1]
+      sectionurl = re.sub('\)','\)',sectionurl)
+      comment = "*No wikipedia article exists for " + term.strip() + ". But I found a relevant section ["+title.split('#')[1]+"]("+sectionurl+") in article ["+title.split('#')[0]+"]("+url+").*\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(**To summon**: wikibot, what is something?)"
+      post_reply(comment,post)
+      log("RELEVANT SECTION SUGGESTED: %s"%filter(lambda x: x in string.printable, title))
+      return (False,False)
     url_string = title
     log("INTERPRETATION: %s"%filter(lambda x: x in string.printable, title))
     return (url_string,"")
-  except Exception as e:  
+  except Exception as e:
     if bool(re.search('.*may refer to:.*',filter(lambda x: x in string.printable, str(e)))):
-      deflist = ""
+      deflist = "\n\nI found 3 most common meanings for you:\n\n"
       for idx, val in enumerate(filter(lambda x: x in string.printable, str(e)).split('may refer to: \n')[1].split('\n')):
 	deflist = deflist + "\n\n>" + wikipedia.summary(val,auto_suggest=True,sentences=1)
-	if idx > 3:
+	if idx > 1:
 	  break
-      summary = "*Can you be a little specific, please? There's too many of \""+term.strip()+"\".*\n\n---"+deflist+"\n\n---\n\n"+str(e).replace('\n','\n\n>')+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(*how to summon*: **wikibot, what is something?**)"
+      summary = "*Oh, there's too many of \""+term.strip()+"\".*\n\n---"+deflist+"\n\n---\n\nOtherwise, "+str(e).replace('\n','\n\n>')+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(**To summon**: wikibot, what is something?)"
       log("ASKING FOR DISAMBIGUATION")
     else:
       log("INTERPRETATION FAIL: %s"%filter(lambda x: x in string.printable, term))
       try:
-	suggest = wikipedia.search(term,results=1)[0]
+	terms = "\""+term+"\""
+	suggest = wikipedia.search(terms,results=1)[0]
 	summary = wikipedia.summary(suggest,auto_suggest=False,redirect=True)
 	url = wikipedia.page(suggest).url.replace(')','\)')
-	summary = "*You mean,* **["+suggest+"]("+url+")**? *It's the closest match I could find.*\n\n---\n\n>"+summary+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(*how to summon*: **wikibot, what is something?**)"
+	summary = "*No wikipedia article exists for "+term.trim()+"* **["+suggest+"]("+url+")** is the closest match I could find.*\n\n---\n\n>"+summary+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(**To summon**: wikibot, what is something?)"
 	log("SUGGESTING %s"%filter(lambda x: x in string.printable, suggest))
       except:
 	trialsummary = wikipedia.summary(term,auto_suggest=True)
 	title = wikipedia.page(term,auto_suggest=True).title
 	url = wikipedia.page(term,auto_suggest=True).url.replace(')','\)')
-	summary = "*" + term.strip() + "? The closest match I could find is ["+title+"]("+url+"):*\n\n---\n\n>"+trialsummary+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(*how to summon*: **wikibot, what is something?**)"
+	summary = "*No wikipedia article exists for " + term.strip() + ". ["+title+"]("+url+") is the closest match I could find.*\n\n---\n\n>"+trialsummary+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(**To summon**: wikibot, what is something?)"
 	log("TRIAL SUMMARY FOR: %s"%filter(lambda x: x in string.printable, title))  
     post_reply(summary,post)
     return (False,False)
@@ -310,7 +323,7 @@ while True:
 	    section = section.replace('\n','\n\n>')
 	    success("TEXT PACKAGED")
 	    section = truncate(section,3500)
-	    comment = ("*Here's the linked section ["+sectionname+"]("+link+") from Wikipedia article ["+page.title+"]("+page_url+")* : \n\n---\n\n>"+section+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(*how to summon*: **wikibot, what is something?**)")
+	    comment = ("*Here's the linked section ["+sectionname+"]("+link+") from Wikipedia article ["+page.title+"]("+page_url+")* : \n\n---\n\n>"+section+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(**To summon**: wikibot, what is something?)")
 	    post_reply(comment,post)
 	  except Exception as e:
 	    #traceback.print_exc()
@@ -318,16 +331,7 @@ while True:
 	    continue
 	  continue
 	
-	### check if link is wikipedia namespace, skip if present
-	has_hash = re.search(r":",article_name) and not re.search(r": ",article_name)
-	if has_hash and not summary_call:
-	  log("Namespace link")
-	  continue
-
-	### check if article is a list, skip if it is
-	if re.search(r"List of.*",article_name) and not summary_call:
-	  log("Is a list")
-	  continue
+	
 	
 	### fetch data from wikipedia
 	
@@ -376,6 +380,7 @@ while True:
 	  fail("BAD DATA FETCHED")
 	  if summary_call:
 	    try:
+	      term = url_string
 	      tell_me_text = wikipedia.summary(term,auto_suggest=False,redirect=True)
 	      tell_me_link = wikipedia.page(term,auto_suggest=False).url
 	      title = wikipedia.page(term,auto_suggest=False).title
@@ -391,23 +396,23 @@ while True:
 		  summary = "Sorry, I failed to fetch the section, but here's the link: "+page_url+"#"+title.split('#')[1]
 	      if re.search(r'(',page_url):
 		page_url = process_brackets_links(page_url)
-	      comment = "*Here you go:*\n\n---\n\n>\n"+summary+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(*how to summon*: **wikibot, what is something?**)"
+	      comment = "*Here you go:*\n\n---\n\n>\n"+summary+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(**To summon**: wikibot, what is something?)"
 	      post_reply(comment,post)
 	      continue
 	    except Exception as e:### TODO this code might not be required. Review.
 	      if bool(re.search('.*may refer to:.*',str(e))):
-		comment = "*Can you be a little specific, please?*\n\n---\n\n>\n"+str(e).replace('\n','\n\n>')+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(*how to summon*: **wikibot, what is something?**)"
+		comment = "*Can you be a little specific, please?*\n\n---\n\n>\n"+str(e).replace('\n','\n\n>')+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(**To summon**: wikibot, what is something?)"
 		log("ASKING FOR DISAMBIGUATION")
 	      else:
 		log("INTERPRETATION FAIL: %s"%term)
 		try:
 		  suggest = wikipedia.search(term,results=1)[0]
 		  trialsummary = wikipedia.summary(suggest,auto_suggest=True)
-		  comment = "*You mean,* **"+suggest+"**?\n\n---\n\n>"+trialsummary+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(*how to summon*: **wikibot, what is something?**)"
+		  comment = "*No Wikipedia article exists for"+term.trim()+"* **"+suggest+"** is the closest match I could find.\n\n---\n\n>"+trialsummary+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(**To summon**: wikibot, what is something?)"
 		  log("SUGGESTING %s"%suggest)
 		except:
-		  comment = "*" + term + "? Sorry, couldn't find that.\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(*how to summon*: **wikibot, what is something?**)"
-		  log("COULD NOT SUGGEST FOR %s",term)
+		  comment = "*" + term + "? Sorry, couldn't find that.\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(**To summon**: wikibot, what is something?)"
+		  log("COULD NOT SUGGEST FOR %s"%term)
 		post_reply(comment,post)
 		continue
 	  continue
@@ -477,7 +482,7 @@ while True:
 	  image_source_markdown = ""
 	  log("IMAGE: %s"%str(e).strip().replace('\n',''))
 	
-	post_markdown = (bit_comment_start+" [***"+article_name_terminal+"***](http://en.wikipedia.org/wiki/"+url_string+") : \n\n---\n\n>"+data+"\n\n---"+image_markdown+"\n\n"+image_source_markdown+"[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(*how to summon*: **wikibot, what is something?**) ^| [^(flag for glitch)](http://www.reddit.com/message/compose?to=/r/autowikibot&subject=bot%20glitch&message=%0Acontext:"+post.permalink+")")
+	post_markdown = (bit_comment_start+" [***"+article_name_terminal+"***](http://en.wikipedia.org/wiki/"+url_string+") : \n\n---\n\n>"+data+"\n\n---"+image_markdown+"\n\n"+image_source_markdown+"[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(**To summon**: wikibot, what is something?) ^| [^(flag for glitch)](http://www.reddit.com/message/compose?to=/r/autowikibot&subject=bot%20glitch&message=%0Acontext:"+post.permalink+")")
 	a = post_reply(post_markdown,post)
 	if not a:
 	  continue
