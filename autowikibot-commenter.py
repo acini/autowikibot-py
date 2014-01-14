@@ -316,6 +316,9 @@ while True:
 	### check for subheading in url string, skip if present
 	if re.search(r"#",article_name) and not summary_call:
 	  pagename = article_name.split('#')[0]
+	  if re.search('List of',pagename):
+	      log('IS A LIST')
+	      continue
 	  if re.search('\)',pagename):
 	    pagename = process_brackets_links(pagename)
 	  pagename = urllib.unquote(pagename)
