@@ -145,7 +145,8 @@ def process_summary_call(post):
     post_body = re.sub('wikibot.*?wh.*?(\'s|is a |is|are) ','__BODYSPLIT__',post.body.lower())
   term = post_body.split('__BODYSPLIT__')[1]
   term = re.sub('\?','',term)
-  term = re.sub('a ','',term)
+  if term[0:2] == 'a ':
+    term = term[2:term.__len__()]
   try:
     term = term.split('\n')[0]
   except:
@@ -153,7 +154,7 @@ def process_summary_call(post):
     pass
   log("TERM: %s"%filter(lambda x: x in string.printable, term))
   try:
-    title = wikipedia.page(term,auto_suggest=True).title
+    title = wikipedia.page(term,auto_suggest=False).title
     if title.lower() == term:
       bit_comment_start = ""
     elif title.lower() != term:
