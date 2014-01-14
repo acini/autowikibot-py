@@ -114,7 +114,7 @@ def filterpass(post):
       return False
     elif str(post.subreddit) in badsubs:
       return False
-    elif re.search(r"List of.*",post.body):
+    elif re.search(r".*/wiki/List of.*",post.body):
       return False
     else:
       return True
@@ -466,11 +466,7 @@ while True:
 	    if caption_div is None:
 	      raise Exception("CAPTION NOT PACKAGED: NO CAPTION FOUND IN SECTION 0")
 	    if page_image not in str(caption_div.find("div", { "class" : "magnify" })):
-	      wholepagesoup = BeautifulSoup(urllib2.urlopen("http://en.wikipedia.org/w/api.php?action=parse&page="+url_string_for_fetch+"&format=txt&prop=text&redirects").read())
-	      caption_div = get_caption_div(wholepagesoup)
-	      pic_markdown = "Related Picture"
-	      if caption_div is None:
-		raise Exception("CAPTION NOT PACKAGED: RELATED IMAGE HAS NO CAPTION")
+	      raise Exception("CAPTION NOT PACKAGED: PAGE IMAGE NOT IN SECTION 0")
 	    discard = caption_div.find("div", { "class" : "magnify" }).extract()
 	    caption = caption_div.text.strip()
 	    caption = strip_wiki(caption)
@@ -485,7 +481,7 @@ while True:
 	  except Exception as e:
 	    if str(e) == "CAPTION NOT PACKAGED: PAGE IMAGE HAS NO CAPTION":
 	      pic_markdown = "Picture"
-	    elif str(e) == "CAPTION NOT PACKAGED: RELATED IMAGE HAS NO CAPTION":
+	    elif str(e) == "CAPTION NOT PACKAGED: PAGE IMAGE NOT IN SECTION 0":
 	      pic_markdown = "Related Picture"
 	    caption_markdown = ""
 	    log(e)
