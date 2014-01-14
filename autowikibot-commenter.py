@@ -114,8 +114,6 @@ def filterpass(post):
       return False
     elif str(post.subreddit) in badsubs:
       return False
-    elif re.search(r":",post.body) and not re.search(r": ",post.body):
-      return False
     elif re.search(r"List of.*",post.body):
       return False
     else:
@@ -147,6 +145,7 @@ def process_summary_call(post):
     post_body = re.sub('wikibot.*?wh.*?(\'s|is a |is|are) ','__BODYSPLIT__',post.body.lower())
   term = post_body.split('__BODYSPLIT__')[1]
   term = re.sub('\?','',term)
+  term = re.sub('a ','',term)
   try:
     term = term.split('\n')[0]
   except:
@@ -494,6 +493,7 @@ while True:
 	except Exception as e:
 	  image_markdown = ""
 	  image_source_markdown = ""
+	  #traceback.print_exc()
 	  log("IMAGE: %s"%str(e).strip().replace('\n',''))
 	
 	post_markdown = (bit_comment_start+" [***"+article_name_terminal+"***](http://en.wikipedia.org/wiki/"+url_string+") : \n\n---\n\n>"+data+"\n\n---"+image_markdown+"\n\n"+image_source_markdown+"[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(**To summon**: wikibot, what is something?) ^| [^(flag for glitch)](http://www.reddit.com/message/compose?to=/r/autowikibot&subject=bot%20glitch&message=%0Acontext:"+post.permalink+")")
