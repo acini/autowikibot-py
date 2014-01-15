@@ -114,7 +114,7 @@ def filterpass(post):
       return False
     elif str(post.subreddit) in badsubs:
       return False
-    elif re.search(r".*/wiki/List of.*",post.body):
+    elif re.search(r".*/wiki/List of.*",post.body) or re.search(r".*/wiki/File:.*",post.body):
       return False
     else:
       return True
