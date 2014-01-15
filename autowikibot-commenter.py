@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 ### TODO integrate wikipedia with url_string extraction
 
-import praw, time, datetime, re, urllib, urllib2, pickle, pyimgur, os, traceback, memcache, wikipedia, string
+import praw, time, datetime, re, urllib, urllib2, pickle, pyimgur, os, traceback, memcache, wikipedia, string, socket
 from util import success, warn, log, fail, special, bluelog
 from bs4 import BeautifulSoup
 from HTMLParser import HTMLParser
@@ -147,6 +147,10 @@ def process_summary_call(post):
   term = re.sub('\?','',term)
   if term[0:2] == 'a ':
     term = term[2:term.__len__()]
+  if term[0:4] == 'the ':
+    term = term[4:term.__len__()]
+  if term.endswith('.'):
+    term = term[0:--(term.__len__()-1)]
   try:
     term = term.split('\n')[0]
   except:
@@ -356,6 +360,7 @@ while True:
 	
 	url = ("http://en.wikipedia.org/w/api.php?action=query&titles="+url_string_for_fetch+"&prop=pageprops&format=xml")
 	try:
+	  socket.setdefaulttimeout(30)
 	  pagepropsdata = urllib2.urlopen(url).read()
 	  pagepropsdata = pagepropsdata.decode('utf-8','ignore')
 	  ppsoup = BeautifulSoup(pagepropsdata)
@@ -369,6 +374,7 @@ while True:
 	log("TOPIC: %s"%article_name_terminal.encode('utf-8','ignore'))
 	url = ("http://en.wikipedia.org/w/api.php?action=parse&page="+url_string_for_fetch+"&format=txt&prop=text&section=0&redirects")
 	try:
+	  socket.setdefaulttimeout(30)
 	  sectiondata = urllib2.urlopen(url).read()
 	  sectiondata = sectiondata.decode('utf-8','ignore')
 	  sectiondata = reddify(sectiondata)
@@ -450,6 +456,7 @@ while True:
 	  if page_image.endswith("svg") or page_image.endswith("ogg"):
 	    raise Exception("IMAGE TYPE UNSUPPORTED BY IMGUR")
 	  url = ("http://en.wikipedia.org/w/api.php?action=query&titles=File:"+page_image+"&prop=imageinfo&iiprop=url|mediatype&iiurlwidth=640&format=xml")
+	  socket.setdefaulttimeout(30)
 	  wi_api_data = urllib2.urlopen(url).read()
 	  wisoup = BeautifulSoup(wi_api_data)
 	  image_url = wisoup.ii['thumburl']
