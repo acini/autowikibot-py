@@ -192,16 +192,15 @@ def process_summary_call(post):
       log("INTERPRETATION FAIL: %s"%filter(lambda x: x in string.printable, term))
       try:
 	terms = "\""+term+"\""
-	suggest = wikipedia.search(terms,results=1)[0]
-	suggesttitle = wikipedia.summary(suggest,auto_suggest=False,redirect=True).title
-	log("SUGGESTING %s"%filter(lambda x: x in string.printable, suggest))
-	bit_comment_start = "Here\'s what I found."
-	return (suggesttitle,bit_comment_start)
+	suggesttitle = str(wikipedia.search(terms,results=1)[0])
+	log("SUGGESTING: %s"%filter(lambda x: x in string.printable, suggesttitle))
+	bit_comment_start = "*Here\'s the closest match I could find for you.*\n\n"
+	return (str(suggesttitle),bit_comment_start)
       except:
 	trialtitle = wikipedia.page(term,auto_suggest=True).title
-	bit_comment_start = "This is what I could find."
-	log("TRIAL SUGGEST FOR: %s"%filter(lambda x: x in string.printable, title))  
-	return (trialtitle,bit_comment_start)
+	bit_comment_start = "*This is the closest match I could find for you.*\n\n"
+	log("TRIAL SUGGESTION: %s"%filter(lambda x: x in string.printable, trialtitle))  
+	return (str(trialtitle),bit_comment_start)
     post_reply(summary,post)
     return (False,False)
 
@@ -291,7 +290,19 @@ while True:
 	    log("LINK TRIGGER: %s"%post.id)
 	  bit_comment_start = "*Here's a bit from linked Wikipedia article about*"
 	else:
-	  url_string, bit_comment_start = process_summary_call(post)
+	  try:
+	    url_string, bit_comment_start = process_summary_call(post)
+	  except Exception as e:
+	    if bool(re.search('.*may refer to:.*',filter(lambda x: x in string.printable, str(e)))):
+	      deflist = "\n\nI found 3 most common meanings for you:\n\n"
+	      for idx, val in enumerate(filter(lambda x: x in string.printable, str(e)).split('may refer to: \n')[1].split('\n')):
+		deflist = deflist + "\n\n>* " + wikipedia.summary(val,auto_suggest=True,sentences=1)
+		if idx > 1:
+		  break
+	      summary = "*Oh, there's too many of \""+url_string.strip()+"\".*\n\n---"+deflist+"\n\n---\n\nOtherwise, "+str(e).replace('\n','\n\n>')+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(**To summon**: wikibot, what is something?)"
+	      log("ASKING FOR DISAMBIGUATION")
+	      post_reply(comment,post)
+	      continue
 	  if not url_string:
 	    continue
 
@@ -416,8 +427,13 @@ while True:
 	      post_reply(comment,post)
 	      continue
 	    except Exception as e:### TODO this code might not be required. Review.
-	      if bool(re.search('.*may refer to:.*',str(e))):
-		comment = "*Can you be a little specific, please?*\n\n---\n\n>\n"+str(e).replace('\n','\n\n>')+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(**To summon**: wikibot, what is something?)"
+	      if bool(re.search('.*may refer to:.*',filter(lambda x: x in string.printable, str(e)))):
+		deflist = "\n\nI found 3 most common meanings for you:\n\n"
+		for idx, val in enumerate(filter(lambda x: x in string.printable, str(e)).split('may refer to: \n')[1].split('\n')):
+		  deflist = deflist + "\n\n>* " + wikipedia.summary(val,auto_suggest=True,sentences=1)
+		  if idx > 1:
+		    break
+		comment = "*Oh, there's too many of \""+url_string.strip()+"\".*\n\n---"+deflist+"\n\n---\n\nOtherwise, "+str(e).replace('\n','\n\n>')+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(**To summon**: wikibot, what is something?)"
 		log("ASKING FOR DISAMBIGUATION")
 	      else:
 		log("INTERPRETATION FAIL: %s"%term)
