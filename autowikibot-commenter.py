@@ -220,10 +220,6 @@ def clean_soup(soup):
     discard = soup.find("span", { "class" : "t_nihongo_help noprint" }).extract()
   return soup
 
-def get_caption_div(soup):
-  caption_div = soup.find("div", { "class" : "thumbcaption" })
-  return caption_div
-  
 class MLStripper(HTMLParser):
     def __init__(self):
         self.reset()
@@ -471,7 +467,7 @@ while True:
 	  
 	  ### Extract caption from already fetched sectiondata #TODO make function
 	  try:
-	    caption_div = get_caption_div(section0soup)
+	    caption_div = section0soup.find("div", { "class" : "thumbcaption" })
 	    pic_markdown = "Picture"
 	    if caption_div is None:
 	      raise Exception("CAPTION NOT PACKAGED: NO CAPTION FOUND IN SECTION 0")
@@ -487,7 +483,10 @@ while True:
 	    caption = re.sub(r' ',' ^',caption)
 	    if caption != "":
 	      caption_markdown = (" ^- **^"+caption+"**")
+	      caption_div = None
 	      success("CAPTION PACKAGED")
+	    else:
+	      raise Exception("CAPTION NOT PACKAGED: NO CAPTION FOUND IN SECTION 0")
 	  except Exception as e:
 	    if str(e) == "CAPTION NOT PACKAGED: PAGE IMAGE HAS NO CAPTION":
 	      pic_markdown = "Picture"
