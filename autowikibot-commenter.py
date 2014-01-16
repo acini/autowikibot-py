@@ -122,14 +122,12 @@ def filterpass(post):
 def get_url_string(post):
   try:
     after_split = post.body.split("wikipedia.org/wiki/")[1]
-    if re.search(r'\)#',after_split):
-      for e in ['\n', ' ']:
-	after_split = after_split.split(e)[0]
-    else:
-      for e in ['\n', ' ']:
-	after_split = after_split.split(e)[0]
-      if not after_split.endswith(')'):
-	after_split = after_split.split(")")[0]
+    for e in ['\n', ' ']:
+      after_split = after_split.split(e)[0]
+    if after_split.endswith(')') and not re.search(r'\(',after_split):
+      after_split = after_split.split(')')[0]
+    if re.search(r'\)',after_split) and not re.search(r'\(',after_split):
+      after_split = after_split.split(')')[0]
     return after_split
   except:
     pass
@@ -198,15 +196,15 @@ def process_summary_call(post):
 	terms = "\""+term+"\""
 	suggesttitle = str(wikipedia.search(terms,results=1)[0])
 	log("SUGGESTING: %s"%filter(lambda x: x in string.printable, suggesttitle))
-	bit_comment_start = "*Here\'s the closest match I could find for you from Wikipedia.*\n\n"
-	if str(suggesttitle).endswith(')'):
+	bit_comment_start = "*Sorry, no Wikipedia article exists with the heading \"" + term.strip() + "\". Here\'s the closest match I could find for you from Wikipedia.*\n\n"
+	if str(suggesttitle).endswith(')') and not re.search('\(',str(suggesttitle)):
 	  suggesttitle = suggesttitle[0:--(suggesttitle.__len__()-1)]
 	return (str(suggesttitle),bit_comment_start)
       except:
 	trialtitle = wikipedia.page(term,auto_suggest=True).title
-	bit_comment_start = "*This is the closest match I could find for you from Wikipedia.*\n\n"
+	bit_comment_start = "*Sorry, no Wikipedia article exists with the heading \"" + term.strip() + "\". This is the closest match I could find for you from Wikipedia.*\n\n"
 	log("TRIAL SUGGESTION: %s"%filter(lambda x: x in string.printable, trialtitle))  
-	if str(trialtitle).endswith(')'):
+	if str(trialtitle).endswith(')') and not re.search('\(',str(trialtitle)):
 	  trialtitle = trialtitle[0:--(trialtitle.__len__()-1)]
 	return (str(trialtitle),bit_comment_start)
     post_reply(summary,post)
@@ -301,6 +299,7 @@ while True:
 	  try:
 	    url_string = ""
 	    url_string, bit_comment_start = process_summary_call(post)
+	    
 	  except Exception as e:
 	    if bool(re.search('.*may refer to:.*',filter(lambda x: x in string.printable, str(e)))):
 	      deflist = "\n\nI found 3 most common meanings for you:\n\n"
@@ -315,17 +314,9 @@ while True:
 	  if not url_string:
 	    continue
 
-	url_string_for_fetch = url_string.replace('_', '%20')
-	url_string_for_fetch = url_string.replace(' ', '%20')
+	url_string_for_fetch = url_string.replace('_', '%20').replace("\\", "")
+	#url_string_for_fetch = url_string.replace(' ', '%20').replace("\\", "")
 	article_name = url_string.replace('_', ' ')
-	
-	### url string correction for brackets
-	if url_string_for_fetch.endswith(')'):
-	  url_string_for_fetch = process_brackets_links(url_string_for_fetch)
-	  if not re.search(r"[(]", url_string_for_fetch):
-	    article_name = ("%s)"%article_name)
-	  url_string = process_brackets_syntax(url_string)
-	
 	
 	### In case user comments like "/wiki/Article.", remove last 1 letter
 	if url_string_for_fetch.endswith(".") or url_string_for_fetch.endswith("]"):
@@ -440,7 +431,7 @@ while True:
 		  deflist = deflist + "\n\n>* " + wikipedia.summary(val,auto_suggest=True,sentences=1)
 		  if idx > 1:
 		    break
-		comment = "*Oh, there's too many of \""+url_string.strip()+"\".*\n\n---"+deflist+"\n\n---\n\nOtherwise, "+str(e).replace('\n','\n\n>')+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(**To summon**: wikibot, what is something?)"
+		comment = "*Oh, there's too many of \""+process_brackets_syntax(url_string).strip()+"\".*\n\n---"+deflist+"\n\n---\n\nOtherwise, "+str(e).replace('\n','\n\n>')+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(**To summon**: wikibot, what is something?)"
 		log("ASKING FOR DISAMBIGUATION")
 	      else:
 		log("INTERPRETATION FAIL: %s"%term)
