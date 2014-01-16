@@ -157,6 +157,9 @@ def process_summary_call(post):
     log("COULD NOT SPLIT")
     pass
   log("TERM: %s"%filter(lambda x: x in string.printable, term))
+  if term.strip().__len__() < 2 or term == None:
+    log("EMPTY TERM")
+    return(False,False)
   try:
     title = wikipedia.page(term,auto_suggest=False).title
     if title.lower() == term:
@@ -168,11 +171,11 @@ def process_summary_call(post):
 	if re.search('resulted in a redirect',str(e)):
 	  bit_comment_start = "*\"" + term.strip() + "\" redirects to* "
     else:
-      bit_comment_start = "*No wikipedia article exists for \"" + term.strip() + "\". Closest match is* "
+      bit_comment_start = "*No Wikipedia article exists with heading \"" + term.strip() + "\". Closest match is* "
     if re.search(r'#',title):
       url = wikipedia.page(title.split('#')[0],auto_suggest=False).url
       sectionurl =  url + "#" + title.split('#')[1]
-      comment = "*Sorry, no wikipedia article exists with the heading \"" + term.strip() + "\". But I found a relevant section ["+title.split('#')[1]+"]("+sectionurl.replace(')','\)')+") in article ["+title.split('#')[0]+"]("+url+") that might interest you.*\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(**To summon**: wikibot, what is something?)"
+      comment = "*Sorry, no Wikipedia article exists with the heading \"" + term.strip() + "\". But I found a relevant section ["+title.split('#')[1]+"]("+sectionurl.replace(')','\)')+") in article ["+title.split('#')[0]+"]("+url+") that might interest you.*\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(**To summon**: wikibot, what is something?)"
       post_reply(comment,post)
       log("RELEVANT SECTION SUGGESTED: %s"%filter(lambda x: x in string.printable, title))
       return (False,False)
@@ -194,12 +197,16 @@ def process_summary_call(post):
 	terms = "\""+term+"\""
 	suggesttitle = str(wikipedia.search(terms,results=1)[0])
 	log("SUGGESTING: %s"%filter(lambda x: x in string.printable, suggesttitle))
-	bit_comment_start = "*Here\'s the closest match I could find for you.*\n\n"
+	bit_comment_start = "*Here\'s the closest match I could find for you from Wikipedia.*\n\n"
+	if str(suggesttitle).endswith(')'):
+	  suggesttitle = suggesttitle[0:--(suggesttitle.__len__()-1)]
 	return (str(suggesttitle),bit_comment_start)
       except:
 	trialtitle = wikipedia.page(term,auto_suggest=True).title
-	bit_comment_start = "*This is the closest match I could find for you.*\n\n"
+	bit_comment_start = "*This is the closest match I could find for you from Wikipedia.*\n\n"
 	log("TRIAL SUGGESTION: %s"%filter(lambda x: x in string.printable, trialtitle))  
+	if str(trialtitle).endswith(')'):
+	  trialtitle = trialtitle[0:--(trialtitle.__len__()-1)]
 	return (str(trialtitle),bit_comment_start)
     post_reply(summary,post)
     return (False,False)
@@ -291,6 +298,7 @@ while True:
 	  bit_comment_start = "*Here's a bit from linked Wikipedia article about*"
 	else:
 	  try:
+	    url_string = ""
 	    url_string, bit_comment_start = process_summary_call(post)
 	  except Exception as e:
 	    if bool(re.search('.*may refer to:.*',filter(lambda x: x in string.printable, str(e)))):
@@ -311,7 +319,7 @@ while True:
 	article_name = url_string.replace('_', ' ')
 	
 	### url string correction for brackets
-	if re.search(r"[(]", url_string_for_fetch):
+	if url_string_for_fetch.endswith(')'):
 	  url_string_for_fetch = process_brackets_links(url_string_for_fetch)
 	  if not re.search(r"[(]", url_string_for_fetch):
 	    article_name = ("%s)"%article_name)
@@ -390,8 +398,6 @@ while True:
 	  continue
 	
 	soup = clean_soup(soup)
-
-	
 	
 	### extract paragraph
 	try:
@@ -452,7 +458,9 @@ while True:
 	data = strip_wiki(data)
 	data = re.sub("Cite error: There are ref tags on this page, but the references will not show without a \{\{reflist\}\} template \(see the help page\)\.", '', data)
 	data = truncate(data,1000)
-	if data.__len__() < 50: continue
+	if data.__len__() < 50:
+	  log("TOO SMALL INTRODUCTION PARAGRAPH")
+	  continue
 	success("TEXT PACKAGED")
 	
 	### Fetch page image from wikipedia
