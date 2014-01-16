@@ -172,8 +172,7 @@ def process_summary_call(post):
     if re.search(r'#',title):
       url = wikipedia.page(title.split('#')[0],auto_suggest=False).url
       sectionurl =  url + "#" + title.split('#')[1]
-      sectionurl = re.sub('\)','\)',sectionurl)
-      comment = "*No wikipedia article exists for \"" + term.strip() + "\". But I found a relevant section ["+title.split('#')[1]+"]("+sectionurl+") in article ["+title.split('#')[0]+"]("+url+").*\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(**To summon**: wikibot, what is something?)"
+      comment = "*Sorry, no wikipedia article exists with the heading \"" + term.strip() + "\". But I found a relevant section ["+title.split('#')[1]+"]("+sectionurl.replace(')','\)')+") in article ["+title.split('#')[0]+"]("+url+") that might interest you.*\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(**To summon**: wikibot, what is something?)"
       post_reply(comment,post)
       log("RELEVANT SECTION SUGGESTED: %s"%filter(lambda x: x in string.printable, title))
       return (False,False)
@@ -194,16 +193,15 @@ def process_summary_call(post):
       try:
 	terms = "\""+term+"\""
 	suggest = wikipedia.search(terms,results=1)[0]
-	summary = wikipedia.summary(suggest,auto_suggest=False,redirect=True)
-	url = wikipedia.page(suggest).url.replace(')','\)')
-	summary = "*No wikipedia article exists for \""+term.trim()+"\"* **["+suggest+"]("+url+")** is the closest match I could find.*\n\n---\n\n>"+summary+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(**To summon**: wikibot, what is something?)"
+	suggesttitle = wikipedia.summary(suggest,auto_suggest=False,redirect=True).title
 	log("SUGGESTING %s"%filter(lambda x: x in string.printable, suggest))
+	bit_comment_start = "Here\'s what I found."
+	return (suggesttitle,bit_comment_start)
       except:
-	trialsummary = wikipedia.summary(term,auto_suggest=True)
-	title = wikipedia.page(term,auto_suggest=True).title
-	url = wikipedia.page(term,auto_suggest=True).url.replace(')','\)')
-	summary = "*No wikipedia article exists for \"" + term.strip() + "\". ["+title+"]("+url+") is the closest match I could find.*\n\n---\n\n>"+trialsummary+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(**To summon**: wikibot, what is something?)"
-	log("TRIAL SUMMARY FOR: %s"%filter(lambda x: x in string.printable, title))  
+	trialtitle = wikipedia.page(term,auto_suggest=True).title
+	bit_comment_start = "This is what I could find."
+	log("TRIAL SUGGEST FOR: %s"%filter(lambda x: x in string.printable, title))  
+	return (trialtitle,bit_comment_start)
     post_reply(summary,post)
     return (False,False)
 
