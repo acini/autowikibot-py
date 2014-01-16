@@ -144,7 +144,7 @@ def process_summary_call(post):
   else:
     post_body = re.sub('wikibot.*?wh.*?(\'s|is a |is|are) ','__BODYSPLIT__',post.body.lower())
   term = post_body.split('__BODYSPLIT__')[1]
-  term = re.sub('\?','',term)
+  term = re.sub('\?','\n',term)
   if term[0:2] == 'a ':
     term = term[2:term.__len__()]
   if term[0:4] == 'the ':
@@ -449,8 +449,8 @@ while True:
 	    page_image = urllib.unquote(page_image.decode('utf-8','ignore'))
 	  except:
 	    raise Exception("NO PAGE IMAGE")
-	  if page_image.endswith("svg") or page_image.endswith("ogg"):
-	    raise Exception("IMAGE TYPE UNSUPPORTED BY IMGUR")
+	  if page_image.endswith("ogg"):
+	    raise Exception("BAD IMAGE")
 	  url = ("http://en.wikipedia.org/w/api.php?action=query&titles=File:"+page_image+"&prop=imageinfo&iiprop=url|mediatype&iiurlwidth=640&format=xml")
 	  socket.setdefaulttimeout(30)
 	  wi_api_data = urllib2.urlopen(url).read()
