@@ -134,10 +134,7 @@ def get_url_string(post):
    
 def process_summary_call(post):
   special("__________________________________________________")
-  try:
-    special("SUMMARY CALL: %s"%post.permalink)
-  except:
-    special("SUMMARY CALL: %s"%post.id)
+  special("SUMMARY CALL: %s"%post.id)
   if re.search('wikibot.*?tell .*? about ',post.body.lower()):
     post_body = re.sub('wikibot.*?tell .*? about ','__BODYSPLIT__',post.body.lower())
   else:
@@ -290,10 +287,7 @@ while True:
 	if has_link:
 	  url_string = get_url_string(post)
 	  log("__________________________________________________")
-	  try:
-	    log("LINK TRIGGER: %s"%post.permalink)
-	  except:
-	    log("LINK TRIGGER: %s"%post.id)
+	  log("LINK TRIGGER: %s"%post.id)
 	  bit_comment_start = "*Here's a bit from linked Wikipedia article about*"
 	else:
 	  try:
@@ -393,7 +387,7 @@ while True:
 	
 	### extract paragraph
 	try:
-	  if soup.p.text.__len__() < 500 or soup.p.text.endswith(':'):
+	  if soup.p.text.__len__() < 500:
 	    all_p = soup.find_all('p')
 	    wt = ""
 	    for idx, val in enumerate(all_p):
