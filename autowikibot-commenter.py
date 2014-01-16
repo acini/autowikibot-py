@@ -128,7 +128,8 @@ def get_url_string(post):
     else:
       for e in ['\n', ' ']:
 	after_split = after_split.split(e)[0]
-      after_split = after_split.split(")")[0]
+      if not after_split.endswith(')'):
+	after_split = after_split.split(")")[0]
     return after_split
   except:
     pass
