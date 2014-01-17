@@ -193,13 +193,19 @@ def process_summary_call(post):
 	terms = "\""+term+"\""
 	suggesttitle = str(wikipedia.search(terms,results=1)[0])
 	log("SUGGESTING: %s"%filter(lambda x: x in string.printable, suggesttitle))
-	bit_comment_start = "*Sorry, no Wikipedia article exists with the heading \"" + term.strip() + "\". Here\'s the closest match I could find for you from Wikipedia.*\n\n"
+	if suggesttitle.lower() == term:
+	  bit_comment_start = ""
+	else:
+	  bit_comment_start = "*Sorry, no Wikipedia article exists with the heading \"" + term.strip() + "\". Here\'s the closest match I could find for you from Wikipedia.*\n\n"
 	if str(suggesttitle).endswith(')') and not re.search('\(',str(suggesttitle)):
 	  suggesttitle = suggesttitle[0:--(suggesttitle.__len__()-1)]
 	return (str(suggesttitle),bit_comment_start)
       except:
 	trialtitle = wikipedia.page(term,auto_suggest=True).title
-	bit_comment_start = "*Sorry, no Wikipedia article exists with the heading \"" + term.strip() + "\". This is the closest match I could find for you from Wikipedia.*\n\n"
+	if trialtitle.lower() == term:
+	  bit_comment_start = ""
+	else:
+	  bit_comment_start = "*Sorry, no Wikipedia article exists with the heading \"" + term.strip() + "\". This is the closest match I could find for you from Wikipedia.*\n\n"
 	log("TRIAL SUGGESTION: %s"%filter(lambda x: x in string.printable, trialtitle))  
 	if str(trialtitle).endswith(')') and not re.search('\(',str(trialtitle)):
 	  trialtitle = trialtitle[0:--(trialtitle.__len__()-1)]
