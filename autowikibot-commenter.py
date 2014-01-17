@@ -310,13 +310,15 @@ while True:
 
 	url_string_for_fetch = url_string.replace('_', '%20').replace("\\", "")
 	url_string_for_fetch = url_string_for_fetch.replace(' ', '%20').replace("\\", "")
+	if url_string_for_fetch.endswith('))'):
+	  url_string_for_fetch = url_string_for_fetch.replace('))',')')
 	article_name = url_string.replace('_', ' ')
 	
 	### In case user comments like "/wiki/Article.", remove last 1 letter
 	if url_string_for_fetch.endswith(".") or url_string_for_fetch.endswith("]"):
 	  url_string_for_fetch = url_string_for_fetch[0:--(url_string_for_fetch.__len__()-1)]
 	
-	### check for subheading in url string, skip if present
+	### check for subheading in url string, process if present
 	if re.search(r"#",article_name) and not summary_call:
 	  pagename = article_name.split('#')[0]
 	  if re.search('List of',pagename):
@@ -370,7 +372,7 @@ while True:
 	  except:
 	    article_name_terminal = article_name.replace('\\', '').decode('utf-8','ignore')
 	
-	log("TOPIC: %s"%article_name_terminal.encode('utf-8','ignore'))
+	log("TOPIC: %s"%filter(lambda x: x in string.printable, article_name_terminal))
 	url = ("http://en.wikipedia.org/w/api.php?action=parse&page="+url_string_for_fetch+"&format=txt&prop=text&section=0&redirects")
 	try:
 	  socket.setdefaulttimeout(30)
