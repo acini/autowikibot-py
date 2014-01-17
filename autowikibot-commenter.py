@@ -205,7 +205,7 @@ def process_summary_call(post):
 	if trialtitle.lower() == term:
 	  bit_comment_start = ""
 	else:
-	  bit_comment_start = "*Sorry, no Wikipedia article exists with the heading \"" + term.strip() + "\". This is the closest match I could find for you from Wikipedia.*\n\n"
+	  bit_comment_start = "*Sorry, no Wikipedia article exists with the heading \"" + term.strip() + "\". By long shot, the closest match I could find for you is this.*\n\n"
 	log("TRIAL SUGGESTION: %s"%filter(lambda x: x in string.printable, trialtitle))  
 	if str(trialtitle).endswith(')') and not re.search('\(',str(trialtitle)):
 	  trialtitle = trialtitle[0:--(trialtitle.__len__()-1)]
@@ -309,7 +309,7 @@ while True:
 		  break
 	      summary = "*Oh, there's too many of \""+url_string.strip()+"\".*\n\n---"+deflist+"\n\n---\n\nOtherwise, "+str(e).replace('\n','\n\n>')+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(**To summon**: wikibot, what is something?)"
 	      log("ASKING FOR DISAMBIGUATION")
-	      post_reply(comment,post)
+	      post_reply(summary,post)
 	      continue
 	  if not url_string:
 	    continue
@@ -342,7 +342,7 @@ while True:
 	  bluelog("TOPIC: %s"%filter(lambda x: x in string.printable, pagename))
 	  bluelog("LINKS TO SECTION: %s"%filter(lambda x: x in string.printable, sectionname))
 	  try:
-	    page = wikipedia.page(pagename.encode('utf-8','ignore'))
+	    page = wikipedia.page(pagename.encode('utf-8','ignore'),auto_suggest=False)
 	    section = page.section(sectionname.encode('utf-8','ignore'))
 	    if section == None or str(section.encode('utf-8','ignore')).strip() == "":
 	      raise Exception("SECTION RETURNED EMPTY")
