@@ -100,11 +100,11 @@ def post_reply(reply,post):
 def filterpass(post):
   global summary_call
   global has_link
-  summary_call = bool(re.search("wikibot.*?wh.*?(\'s|is|are)",post.body.lower()) or re.search("wikibot.*?tell .*? about",post.body.lower()))
-  has_link = any(string in post.body for string in ['://en.wikipedia.org/wiki/', '://en.m.wikipedia.org/wiki/'])
   if post.id in already_done or (post.author.name == USERNAME) or post.author.name in banned_users:
     return False
-  elif has_link or summary_call:
+  summary_call = bool(re.search("wikibot.*?wh.*?(\'s|is|are)",post.body.lower()) or re.search("wikibot.*?tell .*? about",post.body.lower()))
+  has_link = any(string in post.body for string in ['://en.wikipedia.org/wiki/', '://en.m.wikipedia.org/wiki/'])
+  if has_link or summary_call:
     already_done.append(post.id)
     if re.search(r"&gt;", post.body) and not summary_call:
       already_done.append(post.id)
@@ -293,7 +293,7 @@ while True:
 	  try:
 	    url_string = ""
 	    url_string, bit_comment_start = process_summary_call(post)
-	    
+	    url_string = str(url_string)
 	  except Exception as e:
 	    if bool(re.search('.*may refer to:.*',filter(lambda x: x in string.printable, str(e)))):
 	      deflist = "\n\nI found 3 most common meanings for you:\n\n"
@@ -309,7 +309,7 @@ while True:
 	    continue
 
 	url_string_for_fetch = url_string.replace('_', '%20').replace("\\", "")
-	#url_string_for_fetch = url_string.replace(' ', '%20').replace("\\", "")
+	url_string_for_fetch = url_string_for_fetch.replace(' ', '%20').replace("\\", "")
 	article_name = url_string.replace('_', ' ')
 	
 	### In case user comments like "/wiki/Article.", remove last 1 letter
@@ -436,7 +436,7 @@ while True:
 		  comment = "*No Wikipedia article exists for \""+term.trim()+"\"* **"+suggest+"** is the closest match I could find.\n\n---\n\n>"+trialsummary+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(**To summon**: wikibot, what is something?)"
 		  log("SUGGESTING %s"%suggest)
 		except:
-		  comment = "*Sorry, couldn't find a wikipedia article about that.*\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(**To summon**: wikibot, what is something?)"
+		  comment = "*Sorry, couldn't find a wikipedia article about that or I had processing error due to overload on Wikipedia servers.*\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(**To summon**: wikibot, what is something?)"
 		  log("COULD NOT SUGGEST FOR %s"%term)
 		post_reply(comment,post)
 		continue
