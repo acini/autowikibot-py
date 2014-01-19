@@ -19,6 +19,7 @@ Features
 Requirements
 ============
 
+Tested in Python 2.7.3
 * `pip install praw`
 * `pip install pyimgur`
 * `pip install beautifulsoup4`
