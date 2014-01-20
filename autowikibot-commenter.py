@@ -87,6 +87,7 @@ def login(USERNAME,PASSWORD):
 def post_reply(reply,post):
   global totalposted
   try:
+    reply = "[](#autowikibot)"+reply
     post.reply(reply)
     totalposted = totalposted + 1
     success("#%s REPLY SUCCESSFUL"%totalposted)
@@ -241,13 +242,11 @@ def strip_tags(html):
     return s.get_data()
 
 def reddify(html):
-  html = html.replace('<b>', '**')
-  html = html.replace('</b>', '**')
-  html = re.sub('<sup>','^',html)
-  html = re.sub('<sup.*?>','',html)
-  html = html.replace('</sup>','')
-  #html = html.replace('<i>', '*')
-  #html = html.replace('</i>', '*')
+  html = html.replace('&lt;b&gt;', '**')
+  html = html.replace('&lt;/b&gt;', '**')
+  html = re.sub('&lt;sup&gt;','^',html)
+  html = re.sub('&lt;sup.*?&gt;','',html)
+  html = html.replace('&lt;/sup&gt;','')
   return html
 
 def strip_wiki(wiki):
