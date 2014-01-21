@@ -103,7 +103,7 @@ def filterpass(post):
   global has_link
   if post.id in already_done or (post.author.name == USERNAME) or post.author.name in banned_users:
     return False
-  summary_call = bool(re.search("wikibot.*?wh.*?(\'s|is|are)",post.body.lower()) or re.search("wikibot.*?tell .*? about",post.body.lower()))
+  summary_call = bool(re.search("wikibot.*?wh.*?(\'s|is|are|was)",post.body.lower()) or re.search("wikibot.*?tell .*? about",post.body.lower()))
   has_link = any(string in post.body for string in ['://en.wikipedia.org/wiki/', '://en.m.wikipedia.org/wiki/'])
   if has_link or summary_call:
     already_done.append(post.id)
@@ -139,7 +139,7 @@ def process_summary_call(post):
   if re.search('wikibot.*?tell .*? about ',post.body.lower()):
     post_body = re.sub('wikibot.*?tell .*? about ','__BODYSPLIT__',post.body.lower())
   else:
-    post_body = re.sub('wikibot.*?wh.*?(\'s|is a |is|are) ','__BODYSPLIT__',post.body.lower())
+    post_body = re.sub('wikibot.*?wh.*?(\'s|is a |is|are|was) ','__BODYSPLIT__',post.body.lower())
   term = post_body.split('__BODYSPLIT__')[1]
   term = re.sub('\?','\n',term)
   if term[0:2] == 'a ':
