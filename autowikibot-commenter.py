@@ -87,7 +87,7 @@ def login(USERNAME,PASSWORD):
 def post_reply(reply,post):
   global totalposted
   try:
-    reply = "[](#autowikibot)"+reply
+    reply = "#####&#009;\n\n######&#009;\n\n####&#009;\n"+reply
     post.reply(reply)
     totalposted = totalposted + 1
     success("#%s REPLY SUCCESSFUL"%totalposted)
@@ -115,7 +115,7 @@ def filterpass(post):
       return False
     elif str(post.subreddit) in badsubs:
       return False
-    elif re.search(r".*/wiki/List_of.*",post.body) or re.search(r".*/wiki/File:.*",post.body):
+    elif any(string in post.body for string in ['/wiki/File:', '/wiki/List_of', '/wiki/User:', '/wiki/Template:', '/wiki/Category:', '/wiki/Wikipedia:']):
       return False
     else:
       return True
