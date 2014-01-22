@@ -35,7 +35,10 @@ These ones were used in kiwix-version, which is now deprecated
 License
 =========
 
-This bot is licensed under **Creative Commons Attribution-ShareAlike 3.0 Unported license**.
+This bot is licensed under [**Creative Commons Attribution-ShareAlike 3.0 Unported license**](http://creativecommons.org/licenses/by-sa/3.0/)
 
-http://creativecommons.org/licenses/by-sa/3.0/
+Attribution format: 
 
+1. A line with URL of this github page should be present at begninning of source code file.
+
+2. Your readme file should also include a link to this github page, placed as feasible to you.
