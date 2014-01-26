@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-### TODO integrate wikipedia with url_string extraction
 
 import praw, time, datetime, re, urllib, urllib2, pickle, pyimgur, os, traceback, memcache, wikipedia, string, socket
 from util import success, warn, log, fail, special, bluelog
@@ -104,7 +103,7 @@ def filterpass(post):
   global has_link
   if post.id in already_done or (post.author.name == USERNAME) or post.author.name in banned_users:
     return False
-  summary_call = bool(re.search("wikibot.*?wh.*?(\'s|is a |is an|is|are|was)",post.body.lower()) or re.search("wikibot.*?tell .*? about",post.body.lower()))
+  summary_call = re.search("wikibot.*?wh.*?(\'s|is a |is an|is|are|was)",post.body.lower()) or re.search("wikibot.*?tell .*? about",post.body.lower()) or re.search("\$.*\$",post.body.lower())
   has_link = any(string in post.body for string in ['://en.wikipedia.org/wiki/', '://en.m.wikipedia.org/wiki/'])
   if has_link or summary_call:
     already_done.append(post.id)
@@ -137,23 +136,28 @@ def get_url_string(post):
 def process_summary_call(post):
   special("__________________________________________________")
   special("SUMMARY CALL: %s"%post.id)
-  if re.search('wikibot.*?tell .*? about ',post.body.lower()):
-    post_body = re.sub('wikibot.*?tell .*? about ','__BODYSPLIT__',post.body.lower())
-  else:
-    post_body = re.sub('wikibot.*?wh.*?(\'s|is a |is an|is|are|was) ','__BODYSPLIT__',post.body.lower())
-  term = post_body.split('__BODYSPLIT__')[1]
-  term = re.sub('\?','\n',term)
-  if term[0:2] == 'a ':
-    term = term[2:term.__len__()]
-  if term[0:4] == 'the ':
-    term = term[4:term.__len__()]
-  if term.endswith('.'):
-    term = term[0:--(term.__len__()-1)]
-  try:
-    term = term.split('\n')[0]
-  except:
-    log("COULD NOT SPLIT")
-    pass
+  if re.search('wikibot.*?tell .*? about ',post.body.lower()) or re.search("wikibot.*?wh.*?(\'s|is a |is an|is|are|was)",post.body.lower()):
+    if re.search('wikibot.*?tell .*? about ',post.body.lower()):
+      post_body = re.sub('wikibot.*?tell .*? about ','__BODYSPLIT__',post.body.lower())
+    else:
+      post_body = re.sub('wikibot.*?wh.*?(\'s|is a |is an|is|are|was) ','__BODYSPLIT__',post.body.lower())
+    term = post_body.split('__BODYSPLIT__')[1]
+    term = re.sub('\?','\n',term)
+    if term[0:2] == 'a ':
+      term = term[2:term.__len__()]
+    if term[0:4] == 'the ':
+      term = term[4:term.__len__()]
+    if term.endswith('.'):
+      term = term[0:--(term.__len__()-1)]
+    try:
+      term = term.split('\n')[0]
+    except:
+      log("COULD NOT SPLIT")
+      pass
+  elif re.search("\$.*\$",post.body.lower()):
+    term = re.search("\$.*\$",post.body.lower()).group(0).strip('$')
+  
+  
   log("TERM: %s"%filter(lambda x: x in string.printable, term))
   if term.strip().__len__() < 2 or term == None:
     log("EMPTY TERM")
@@ -380,7 +384,7 @@ while True:
 	  except:
 	    article_name_terminal = article_name.replace('\\', '').decode('utf-8','ignore')
 	
-	article_name_terminal = urllib.unquote(article_name_terminal)
+	
 	log("TOPIC: %s"%filter(lambda x: x in string.printable, article_name_terminal))
 	url = ("http://en.wikipedia.org/w/api.php?action=parse&page="+url_string_for_fetch+"&format=xml&prop=text&section=0&redirects")
 	try:
@@ -430,7 +434,7 @@ while True:
 	      comment = "*Here you go:*\n\n---\n\n>\n"+summary+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(**Summon**: wikibot, what is something?)"
 	      post_reply(comment,post)
 	      continue
-	    except Exception as e:### TODO this code might not be required. Review.
+	    except Exception as e:
 	      if bool(re.search('.*may refer to:.*',filter(lambda x: x in string.printable, str(e)))):
 		deflist = "\n\nI found 3 most common meanings for you:\n\n"
 		for idx, val in enumerate(filter(lambda x: x in string.printable, str(e)).split('may refer to: \n')[1].split('\n')):
@@ -485,7 +489,7 @@ while True:
 	  ### Upload to imgur
 	  uploaded_image = im.upload_image(url=image_url, title=page_image)
 	  
-	  ### Extract caption from already fetched sectiondata #TODO make function
+	  ### Extract caption from already fetched sectiondata 
 	  try:
 	    caption_div = section0soup.find("div", { "class" : "thumbcaption" })
 	    pic_markdown = "Picture"
@@ -535,6 +539,5 @@ while True:
   except Exception as e: 
     traceback.print_exc()
     warn("GLOBAL: %s"%e)
-    time.sleep(3)
     continue
   
