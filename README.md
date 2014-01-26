@@ -35,7 +35,8 @@ First, with your bot account, create 3 comments where they will not be removed b
 
 1. comment with banned users list separated by single newline
 2. comment with excluded subreddits (without /r/) list separated by single newline
-3. comment with a number indicating total number of posts made by bot. Set 0 at first setup.
+3. comment with list of subreddits where bot will only reply to top level (root) comments
+4. comment with a number indicating total number of posts made by bot. Set 0 at first setup.
 
 Second, You need to create a file called datafile.inf and have following data in it on separate lines:
 
@@ -44,6 +45,7 @@ Second, You need to create a file called datafile.inf and have following data in
 * imgur client id
 * ID of comment with banned users list
 * ID of comment with excluded subreddits
+* ID of comment with root only subreddits
 * ID of comment with a number of total number of posts
 
 The file will look something like this:
@@ -54,6 +56,7 @@ botspassword
 rt23rnsr2453fop
 cetagti
 cefsfs4
+cef43fs
 ce5gd56
 ````
 
