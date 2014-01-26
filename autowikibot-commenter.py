@@ -536,7 +536,7 @@ while True:
 	      topicurl = wikipedia.page(topic).url.replace('(','\(').replace(')','\)')
 	      topic = topic.replace(' ',' ^').replace(' ^(',' ^\(')
 	      interesting_list = interesting_list + " [^" + topic + "]" + "(" +topicurl+ ")^,"
-	    interesting_markdown = "^Interesting:"+interesting_list.strip(',')
+	    interesting_markdown = "^Interesting:"+interesting_list.strip('^,')
 	    success("%s INTERESTING ARTICLE LINKS PACKAGED"%intlist.__len__())
 	  else:
 	    raise Exception("NO SUGGESTIONS")
