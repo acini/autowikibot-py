@@ -22,6 +22,7 @@ def load_data():
   global imgur_client_id
   global banned_users_comment
   global badsubs_comment
+  global totalposted_comment
   imgur_client_id = datafile_lines[2].strip()
   banned_users_comment = "t1_"+datafile_lines[3].strip()
   badsubs_comment = "t1_"+datafile_lines[4].strip()
