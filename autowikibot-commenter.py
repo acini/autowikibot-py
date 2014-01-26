@@ -18,18 +18,22 @@ os.chdir(dname)
 def load_data():
   global banned_users
   global badsubs
+  global root_only_subs
   global totalposted
   global imgur_client_id
   global banned_users_comment
   global badsubs_comment
+  global root_only_subs_comment
   global totalposted_comment
   imgur_client_id = datafile_lines[2].strip()
   banned_users_comment = "t1_"+datafile_lines[3].strip()
   badsubs_comment = "t1_"+datafile_lines[4].strip()
-  totalposted_comment = "t1_"+datafile_lines[5].strip()
+  root_only_subs_comment = "t1_"+datafile_lines[5].strip()
+  totalposted_comment = "t1_"+datafile_lines[6].strip()
   try:
     banned_users = r.get_info(thing_id=banned_users_comment).body.split()
     badsubs = r.get_info(thing_id=badsubs_comment).body.split()
+    root_only_subs = r.get_info(thing_id=root_only_subs_comment).body.split()
     totalposted = int(float(r.get_info(thing_id=totalposted_comment).body))
     success("DATA LOADED")
   except Exception as e:
@@ -103,6 +107,8 @@ def filterpass(post):
     elif str(post.subreddit) in badsubs:
       return False
     elif any(string in post.body for string in ['/wiki/File:', '/wiki/List_of', '/wiki/User:', '/wiki/Template:', '/wiki/Category:', '/wiki/Wikipedia:']):
+      return False
+    elif str(post.subreddit) in root_only_subs and not post.is_root:
       return False
     else:
       return True
