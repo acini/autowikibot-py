@@ -155,7 +155,7 @@ def process_summary_call(post):
       log("COULD NOT SPLIT")
       pass
   elif re.search("\$\-.*\-\$",post.body.lower()):
-    term = re.search("\$\-.*\-\$",post.body.lower()).group(0).strip('$').strip('-')
+    term = re.search("\$\-.*\-\$",post.body.lower()).group(0).strip('$').strip('-').strip()
   
   
   log("TERM: %s"%filter(lambda x: x in string.printable, term))
