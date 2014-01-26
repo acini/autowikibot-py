@@ -150,15 +150,12 @@ while True:
 
 	      ### Add user to exclude list ###TODO remove user from exclusion list
 	  if re.search(excludekeyword, msg.body.lower()):
+	    msg.mark_as_read()
+	    banned_users = [line.strip() for line in open('banned_users')]
 	    with open('banned_users', 'a') as myfile:
 	      myfile.write("%s\n"%msg.author.name)
-	    msg.mark_as_read()
 	    msg.reply("*Done! I won't reply to your comments now.*\n\n*Have a nice day!*")
 	    ### Save user to array and communicate to commenter process
-	    try:
-	      banned_users = [line.strip() for line in open('banned_users')] #redundancy if banned user is manually added
-	    except:
-	      file_warning()
 	    shared.set('banned_users',banned_users)
 	    banned_users.append(msg.author.name)
 	    shared.set('banned_users',banned_users)
@@ -166,6 +163,7 @@ while True:
 	    
 	  if re.search(includekeyword, msg.body.lower()):
 	    msg.mark_as_read()
+	    banned_users = [line.strip() for line in open('banned_users')]
 	    if msg.author.name in banned_users:
 	      banned_users.remove(str(msg.author.name))
 	      msg.reply("*OK! I removed you from the blacklist. I will resume replying to your comments now.*")
