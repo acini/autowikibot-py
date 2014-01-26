@@ -103,7 +103,7 @@ def filterpass(post):
   global has_link
   if post.id in already_done or (post.author.name == USERNAME) or post.author.name in banned_users:
     return False
-  summary_call = re.search("wikibot.*?wh.*?(\'s|is a |is an|is|are|was)",post.body.lower()) or re.search("wikibot.*?tell .*? about",post.body.lower()) or re.search("\$\-.*[^ ]\-\$",post.body.lower())
+  summary_call = re.search("wikibot.*?wh.*?(\'s|is a |is an|is|are|was)",post.body.lower()) or re.search("wikibot.*?tell .*? about",post.body.lower()) or re.search("\$\-.*\-\$",post.body.lower())
   has_link = any(string in post.body for string in ['://en.wikipedia.org/wiki/', '://en.m.wikipedia.org/wiki/'])
   if has_link or summary_call:
     already_done.append(post.id)
@@ -154,8 +154,8 @@ def process_summary_call(post):
     except:
       log("COULD NOT SPLIT")
       pass
-  elif re.search("\$\-.*[^ ]\-\$",post.body.lower()):
-    term = re.search("\$\-.*[^ ]\-\$",post.body.lower()).group(0).strip('$').strip('-')
+  elif re.search("\$\-.*\-\$",post.body.lower()):
+    term = re.search("\$\-.*\-\$",post.body.lower()).group(0).strip('$').strip('-')
   
   
   log("TERM: %s"%filter(lambda x: x in string.printable, term))
