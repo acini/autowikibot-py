@@ -13,6 +13,7 @@ Features
 
 * Responds to comments like "wikibot, what is dancing?" and  "wikibot, tell me about enigma machine"
 * In-post summoning to keywords. e.g. I guess, OP should add some more ?- Liverwurst -? to the recipe
+* Suggest upto 4 related interesting articles
 * Deletes on parent commenter command
 * Deletes if comment score below threshold
 * User blacklist
