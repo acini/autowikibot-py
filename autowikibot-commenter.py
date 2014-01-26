@@ -103,7 +103,7 @@ def filterpass(post):
   global has_link
   if post.id in already_done or (post.author.name == USERNAME) or post.author.name in banned_users:
     return False
-  summary_call = re.search("wikibot.*?wh.*?(\'s|is a |is an|is|are|was)",post.body.lower()) or re.search("wikibot.*?tell .*? about",post.body.lower()) or re.search("\$\-.*\-\$",post.body.lower())
+  summary_call = re.search("wikibot.*?wh.*?(\'s|is a |is an|is|are|was)",post.body.lower()) or re.search("wikibot.*?tell .*? about",post.body.lower()) or re.search("\?\-.*\-\?",post.body.lower())
   has_link = any(string in post.body for string in ['://en.wikipedia.org/wiki/', '://en.m.wikipedia.org/wiki/'])
   if has_link or summary_call:
     already_done.append(post.id)
@@ -154,8 +154,8 @@ def process_summary_call(post):
     except:
       log("COULD NOT SPLIT")
       pass
-  elif re.search("\$\-.*\-\$",post.body.lower()):
-    term = re.search("\$\-.*\-\$",post.body.lower()).group(0).strip('$').strip('-').strip()
+  elif re.search("\?\-.*\-\?",post.body.lower()):
+    term = re.search("\?\-.*\-\?",post.body.lower()).group(0).strip('$').strip('-').strip()
   
   
   log("TERM: %s"%filter(lambda x: x in string.printable, term))
@@ -518,14 +518,34 @@ while True:
 	      pic_markdown = "Related Picture"
 	    caption_markdown = ""
 	    log(e)
-	  image_markdown = ("\n\n[^(**"+pic_markdown+"**)]("+uploaded_image.link+")"+caption_markdown)
+	  image_markdown = ("[^(**"+pic_markdown+"**)]("+uploaded_image.link+")"+caption_markdown)
 	  success("IMAGE PACKAGED VIA %s"%uploaded_image.link)
 	except Exception as e:
 	  image_markdown = ""
 	  image_source_markdown = ""
 	  #traceback.print_exc()
 	  log("IMAGE: %s"%str(e).strip().replace('\n',''))
-	post_markdown = (bit_comment_start+" [***"+article_name_terminal+"***](http://en.wikipedia.org/wiki/"+url_string_for_fetch.replace(')','\)')+") : \n\n---\n\n>"+data+"\n\n---"+image_markdown+"\n\n"+image_source_markdown+"[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(**Summon**: wikibot, what is something?) ^| [^(flag for glitch)](http://www.reddit.com/message/compose?to=/r/autowikibot&subject=bot%20glitch&message=%0Acontext:"+post.permalink+")")
+	  
+	###Interesting articles
+	try:
+	  intlist = wikipedia.search(article_name_terminal,results=5)
+	  if intlist.__len__() > 1:
+	    intlist.remove(article_name_terminal)
+	    interesting_list = " ^|"
+	    for topic in intlist:
+	      topic = topic.replace('(','\(').replace(')','\)')
+	      topicurl = wikipedia.page(topic).url.replace('(','\(').replace(')','\)')
+	      interesting_list = interesting_list + " [^(" + topic + ")]" + "(" +topicurl+ ") ^|"
+	    interesting_markdown = "^Interesting:"+interesting_list
+	    success("%s INTERESTING ARTICLE LINKS PACKAGED"%intlist.__len__())
+	  else:
+	    raise Exception("NO SUGGESTIONS")
+	except Exception as e:
+	  interesting_markdown = ""
+	  #traceback.print_exc()
+	  log("INTERESTING ARTICLE LINKS NOT PACKAGED: %s"%str(e).strip().replace('\n',''))
+	
+	post_markdown = (bit_comment_start+" [***"+article_name_terminal+"***](http://en.wikipedia.org/wiki/"+url_string_for_fetch.replace(')','\)')+") : \n\n---\n\n>"+data+"\n\n>"+image_markdown+"\n\n---\n\n"+interesting_markdown+"\n\n"+image_source_markdown+"[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will delete if comment's score is -1 or less.)*  ^| ^(**Summon**: wikibot, what is something?) ^| [^(flag for glitch)](http://www.reddit.com/message/compose?to=/r/autowikibot&subject=bot%20glitch&message=%0Acontext:"+post.permalink+")")
 	a = post_reply(post_markdown,post)
 	if not a:
 	  continue
