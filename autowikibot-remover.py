@@ -17,6 +17,7 @@ shared = memcache.Client(['127.0.0.1:11211'], debug=0)
 r = praw.Reddit("autowikibot by /u/acini at /r/autowikibot")
 deletekeyword = "delete"
 excludekeyword = "leave me alone"
+includekeyword = "follow me again"
 global banned_users
 
 def file_warning():
@@ -112,7 +113,7 @@ while True:
     
     
 
-    ### Check inbox 15 times
+    ### Check inbox few times
     log("AUTODELETE CYCLES STARTED")
     for x in range(1, 11):
       log("CYCLE %s"%x)
@@ -132,11 +133,10 @@ while True:
 		  success("AUTODELETION AT %s"%bot_comment_parent.permalink)
 		else:
 		  #msg.reply ("*Sorry. Only /u/%s can trigger this delete.*"%bot_comment_parent.author.name)
-		  fail("BAD AUTODELETE REQUEST AT /u/%s"%bot_comment_parent.permalink)
+		  fail("BAD AUTODELETE REQUEST AT %s"%bot_comment_parent.permalink)
 	      else:
 		if msg.author.name != USERNAME:
 		  warn("AUTODELETE FLAG OUT OF CONTEXT AT %s"%bot_comment_parent.permalink)
-		  continue
 	      msg.mark_as_read()
 	    except Exception as e:
 	      if (str(e)=="'NoneType' object has no attribute 'name'"):
@@ -162,7 +162,27 @@ while True:
 	    shared.set('banned_users',banned_users)
 	    banned_users.append(msg.author.name)
 	    shared.set('banned_users',banned_users)
-	    success("BANNED /u/%s AT %s"%(msg.author.name,bot_comment.permalink))
+	    success("BANNED /u/%s AT %s"%(msg.author.name,msg.permalink))
+	    
+	  if re.search(includekeyword, msg.body.lower()):
+	    msg.mark_as_read()
+	    if msg.author.name in banned_users:
+	      banned_users.remove(str(msg.author.name))
+	      msg.reply("*OK! I removed you from the blacklist. I will resume replying to your comments now.*")
+	      success("UNBANNED /u/%s AT %s"%(msg.author.name,msg.permalink))
+	    else:
+	      msg.reply("*Dear, you are not in the blacklist.*")
+	      success("BAD UNBAN REQUEST BY /u/%s AT %s"%(msg.author.name,msg.permalink))
+	    ### Save to disk and communicate to commenter process
+	    try:
+	      banned_users.sort()
+	      with open('banned_users', 'w+') as myfile:
+		for item in banned_users:
+		  myfile.write("%s\n" % item)
+	    except:
+	      file_warning()
+	    shared.set('banned_users',banned_users)
+	    
 	time.sleep(60)
       except KeyboardInterrupt:
 	with open('totaldeleted', 'w') as f:
