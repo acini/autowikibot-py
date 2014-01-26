@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import praw, time, re, pickle, traceback, os, memcache
+import praw, time, re, pickle, traceback, os
 from util import success, warn, log, fail
 
 ### Uncomment to debug
@@ -11,39 +11,18 @@ abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
 
-### Set memcache client
-shared = memcache.Client(['127.0.0.1:11211'], debug=0)
-
 r = praw.Reddit("autowikibot by /u/acini at /r/autowikibot")
 deletekeyword = "delete"
 excludekeyword = "leave me alone"
 includekeyword = "follow me again"
 global banned_users
 
-def file_warning():
-  fail("One or more of data files is not found or is corrupted.")
-  log("Have them configured as follows:")
-  log("totaldeleted - Create empty file if running for first time.")
-  log("banned_users - Create empty file if running for first time. Bot will add banned users automatically. Add manually on separate lines.")
- 
-### Load saved data
-try:
-  banned_users = [line.strip() for line in open('banned_users')]
-  shared.set('banned_users',banned_users)
-  with open('totaldeleted') as f: #TODO replace pickle
-      deleted = pickle.load(f)
-  with open ('userpass', 'r') as myfile:
-    lines=myfile.readlines()
-  success("DATA LOADED")
-except:
-  file_warning()
-  exit()
-
-
-
 ### Login
-USERNAME = lines[0].strip()
-PASSWORD = lines[1].strip()
+with open ('datafile.inf', 'r') as myfile:
+    datafile_lines=myfile.readlines()
+USERNAME = datafile_lines[0].strip()
+PASSWORD = datafile_lines[1].strip()
+banned_users_comment = "t1_"+datafile_lines[3].strip()
 
 Trying = True
 while Trying:
@@ -57,6 +36,22 @@ while Trying:
         except Exception as e:
 	  fail(e)
 	  time.sleep(5)
+
+def file_warning():
+  fail("One or more of data files is not found or is corrupted.")
+  log("Have them configured as follows:")
+  log("totaldeleted - Create empty file if running for first time.")
+  log("banned_users - Create empty file if running for first time. Bot will add banned users automatically. Add manually on separate lines.")
+ 
+### Load saved data
+try:
+  banned_users = r.get_info(thing_id=banned_users_comment).body.split()
+  deleted = 0
+  success("DATA LOADED")
+except:
+  file_warning()
+  traceback.print_exc()
+  exit()
 
 while True:
   try:
@@ -78,7 +73,7 @@ while True:
 	spaces = "   "
       
       total = total + 1
-      if c.score < 0:
+      if c.score < 1:
 	c.delete()
 	print "\033[1;41m%s%s\033[1;m"%(spaces,c.score),
 	deleted = deleted + 1
@@ -89,13 +84,9 @@ while True:
       elif c.score > 1:
 	print "\033[1;34m%s%s\033[1;m"%(spaces,c.score),
 	upvoted = upvoted + 1
-	#call (["firefox",c.permalink])
       elif c.score > 0:
 	print "\033[1;30m%s%s\033[1;m"%(spaces,c.score),
 	unvoted = unvoted + 1
-      elif c.score < 1:
-	print "\033[1;33m%s%s\033[1;m"%(spaces,c.score),
-	downvoted = downvoted + 1
       
     print ("")
     log("COMMENT SCORE CHECK CYCLE COMPLETED")
@@ -106,12 +97,6 @@ while True:
     warn("Unvoted       %s\t%s\b\b %%"%(unvoted,nrate))
     warn("Downvoted:    %s\t%s\b\b %%"%(downvoted,drate))
     warn("Total:        %s"%total)
-    
-    with open('totaldeleted', 'w') as f:
-      pickle.dump(deleted, f)
-    log("STATISTICS SAVED")
-    
-    
 
     ### Check inbox few times
     log("AUTODELETE CYCLES STARTED")
@@ -148,59 +133,43 @@ while True:
 	      msg.mark_as_read()
 	      continue
 
-	      ### Add user to exclude list ###TODO remove user from exclusion list
+	  ### Add user to exclude list
 	  if re.search(excludekeyword, msg.body.lower()):
-	    msg.mark_as_read()
-	    banned_users = [line.strip() for line in open('banned_users')]
-	    with open('banned_users', 'a') as myfile:
-	      myfile.write("%s\n"%msg.author.name)
-	    msg.reply("*Done! I won't reply to your comments now.*\n\n*Have a nice day!*")
-	    ### Save user to array and communicate to commenter process
-	    shared.set('banned_users',banned_users)
+	    banned_users = r.get_info(thing_id=banned_users_comment).body.split()
 	    banned_users.append(msg.author.name)
-	    shared.set('banned_users',banned_users)
-	    success("BANNED /u/%s AT %s"%(msg.author.name,msg.permalink))
+	    banned_users.sort()
+	    c_banned_users = ""
+	    for item in banned_users:
+	      c_banned_users = item+"\n"+c_banned_users
+	    c_banned_users.strip()
+	    r.get_info(thing_id=banned_users_comment).edit(c_banned_users)
+	    time.sleep(1)
+	    msg.mark_as_read()
+	    msg.reply("*Done! I won't reply to your comments (in effect 60 minutes after this comment).*\n\n*Have a nice day!*")
+	    
+	    success("BANNED /u/%s AT %s"%(msg.author.name,msg.id))
 	    
 	  if re.search(includekeyword, msg.body.lower()):
 	    msg.mark_as_read()
-	    banned_users = [line.strip() for line in open('banned_users')]
+	    banned_users = r.get_info(thing_id=banned_users_comment).body.split()
 	    if msg.author.name in banned_users:
 	      banned_users.remove(str(msg.author.name))
+	      r.get_info(thing_id=banned_users_comment).edit(banned_users)
 	      msg.reply("*OK! I removed you from the blacklist. I will resume replying to your comments now.*")
 	      success("UNBANNED /u/%s AT %s"%(msg.author.name,msg.permalink))
 	    else:
 	      msg.reply("*Dear, you are not in the blacklist.*")
 	      warn("BAD UNBAN REQUEST BY /u/%s AT %s"%(msg.author.name,msg.permalink))
-	    ### Save to disk and communicate to commenter process
-	    try:
-	      banned_users.sort()
-	      with open('banned_users', 'w+') as myfile:
-		for item in banned_users:
-		  myfile.write("%s\n" % item)
-	    except:
-	      file_warning()
-	    shared.set('banned_users',banned_users)
-	    
+
 	time.sleep(60)
-      except KeyboardInterrupt:
-	with open('totaldeleted', 'w') as f:
-	  pickle.dump(deleted, f)
-	success("STATISTICS DUMPED TO FILE")
-	exit()
       except Exception as e:
 	traceback.print_exc()
 	fail(e)
 	time.sleep(60)
 	continue
     log("AUTODELETE CYCLES COMPLETED")
-    with open('totaldeleted', 'w') as f:
-      pickle.dump(deleted, f)
-    success("DATA SAVED")
         
   except KeyboardInterrupt:
-    with open('totaldeleted', 'w') as f:
-	pickle.dump(deleted, f)
-    success("DATA SAVED")
     log("EXITING")
     break
   except Exception as e:
