@@ -6,7 +6,7 @@ Reddit bot that replies to comments with excerpt from linked wikipedia article o
 Current instance:
 
 [See bot in action](http://www.reddit.com/u/autowikibot) |
-[Subreddit](http://www.reddit.com/r/autowikibot/) |
+[Subreddit](http://www.reddit.com/r/autowikibot/)
 
 Features
 ========
