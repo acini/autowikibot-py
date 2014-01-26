@@ -1,25 +1,27 @@
 autowikibot
 ===========
 
-Bot that comments on reddit comments with excerpt from linked wikipedia article.
+Reddit bot that replies to comments with excerpt from linked wikipedia article or section.
+
+Current instance:
 
 [See bot in action](http://www.reddit.com/u/autowikibot) |
 [Subreddit](http://www.reddit.com/r/autowikibot/) |
-[Bot Status](https://twitter.com/autowikibot) |
-[Screenshots](https://github.com/nexarx/autowikibot-py/wiki/Screenshots)
 
 Features
 ========
 
 * Responds to comments like "wikibot, what is dancing?" and  "wikibot, tell me about enigma machine"
-* Commenting on comments having single wikipedia link
-* Deletion on request by parent commenter
-* Deletion on comment score below threshold
+* In-post summoning to keywords. e.g. I guess, OP should add some more ?- Liverwurst -? to the recipe
+* Deletes on parent commenter command
+* Deletes if comment score below threshold
+* User blacklist
+* Automated subreddit blacklisting on first HTTP 403 encountered
 
 Requirements
 ============
 
-Tested in Python 2.7.3
+Tested in Python 2.7.6
 * `pip install praw`
 * `pip install pyimgur`
 * `pip install beautifulsoup4`
@@ -37,8 +39,4 @@ License
 
 This bot is licensed under [**Creative Commons Attribution-ShareAlike 3.0 Unported license**](http://creativecommons.org/licenses/by-sa/3.0/)
 
-Attribution format: 
-
-1. A line with URL of this github page should be present at begninning of source code file.
-
-2. Your readme file should also include a link to this github page, placed as feasible to you.
+Attribution: Include URL to this github page in your README (or similar) file, or at start of code.
