@@ -531,12 +531,12 @@ while True:
 	  intlist = wikipedia.search(article_name_terminal,results=5)
 	  if intlist.__len__() > 1:
 	    intlist.remove(article_name_terminal)
-	    interesting_list = " ^|"
+	    interesting_list = ""
 	    for topic in intlist:
-	      topic = topic.replace('(','\(').replace(')','\)')
 	      topicurl = wikipedia.page(topic).url.replace('(','\(').replace(')','\)')
-	      interesting_list = interesting_list + " [^(" + topic + ")]" + "(" +topicurl+ ") ^|"
-	    interesting_markdown = "^Interesting:"+interesting_list
+	      topic = topic.replace(' ',' ^').replace(' ^(',' ^\(')
+	      interesting_list = interesting_list + " [^" + topic + "]" + "(" +topicurl+ ")^,"
+	    interesting_markdown = "^Interesting:"+interesting_list.strip(',')
 	    success("%s INTERESTING ARTICLE LINKS PACKAGED"%intlist.__len__())
 	  else:
 	    raise Exception("NO SUGGESTIONS")
