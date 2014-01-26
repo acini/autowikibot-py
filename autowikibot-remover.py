@@ -172,7 +172,7 @@ while True:
 	      success("UNBANNED /u/%s AT %s"%(msg.author.name,msg.permalink))
 	    else:
 	      msg.reply("*Dear, you are not in the blacklist.*")
-	      success("BAD UNBAN REQUEST BY /u/%s AT %s"%(msg.author.name,msg.permalink))
+	      warn("BAD UNBAN REQUEST BY /u/%s AT %s"%(msg.author.name,msg.permalink))
 	    ### Save to disk and communicate to commenter process
 	    try:
 	      banned_users.sort()
