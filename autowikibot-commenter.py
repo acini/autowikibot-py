@@ -1,88 +1,73 @@
 # -*- coding: utf-8 -*-
 
-import praw, time, datetime, re, urllib, urllib2, pickle, pyimgur, os, traceback, memcache, wikipedia, string, socket
+import praw, time, datetime, re, urllib, urllib2, pickle, pyimgur, os, traceback, wikipedia, string, socket
 from util import success, warn, log, fail, special, bluelog
 from bs4 import BeautifulSoup
 from HTMLParser import HTMLParser
+
 ### Uncomment to debug
 #import logging
 #logging.basicConfig(level=logging.DEBUG)
-
-### Set memcache client
-shared = memcache.Client(['127.0.0.1:11211'], debug=0)
 
 ### Set root directory to script directory
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
 
-### functions
-def file_warning():
-  fail("One or more of data files is not found or is corrupted.")
-  log("Have them configured as follows:")
-  log("already_done_dump - Create empty file if running for first time.")
-  log("totalposted - Create empty file if running for first time.")
-  log("badsubs - Create empty file if running for first time. Add excluded subreddits if you are using \"all\" as allowed subreddit. Leave empty if allowing specific subreddits.")
-  log("banned_users - Create empty file if running for first time. Bot will add banned users automatically. Add manually on separate lines.")
-  log("imgur_client_id - Put your imgur client_id in that file")
-  
+###Load data
 def load_data():
   global banned_users
   global badsubs
-  global already_done
   global totalposted
   global imgur_client_id
-  global USERNAME
-  global PASSWORD
+  imgur_client_id = datafile_lines[2].strip()
+  banned_users_comment = "t1_"+datafile_lines[3].strip()
+  badsubs_comment = "t1_"+datafile_lines[4].strip()
+  totalposted_comment = "t1_"+datafile_lines[5].strip()
   try:
-    banned_users = [line.strip() for line in open('banned_users')]
-    badsubs = [line.strip() for line in open('badsubs')]
-    already_done = [line.strip() for line in open('already_done_dump')]
-    with open('totalposted') as f:
-      totalposted = pickle.load(f)
-    with open ('imgur_client_id', 'r') as myfile:
-      imgur_client_id=myfile.read()
-    with open ('userpass', 'r') as myfile:
-      userpass_lines=myfile.readlines()
-      USERNAME = userpass_lines[0].strip()
-      PASSWORD = userpass_lines[1].strip()
+    banned_users = r.get_info(thing_id=banned_users_comment).body.split()
+    badsubs = r.get_info(thing_id=badsubs_comment).body.split()
+    totalposted = int(float(r.get_info(thing_id=totalposted_comment).body))
     success("DATA LOADED")
-  except:
+  except Exception as e:
     traceback.print_exc()
-    file_warning()
+    fail("DATA LOAD FAILED: %s"%e)
     exit()
 
 def save_changing_variables():
-  banned_users.sort()
-  with open('banned_users', 'w+') as myfile:
-    for item in banned_users:
-      myfile.write("%s\n" % item)
   badsubs.sort()
-  with open('badsubs', 'w+') as myfile:
-    for item in badsubs:
-      myfile.write("%s\n" % item)
-  with open('already_done_dump', 'w+') as myfile:
-    for item in already_done:
-      myfile.write("%s\n" % item)
-  with open('totalposted', 'w+') as f:#TODO replace pickle with simple write
-    pickle.dump(totalposted, f)
+  c_badsubs = ""
+  for item in badsubs:
+    c_badsubs = item+"\n"+c_badsubs
+  c_badsubs.strip()
+  r.get_info(thing_id=badsubs_comment).edit(c_badsubs)
+  time.sleep(1)
+  
+  r.get_info(thing_id=totalposted_comment).edit(totalposted)
+  time.sleep(1)
+
   success("DATA SAVED")
 
+with open ('datafile.inf', 'r') as myfile:
+  datafile_lines=myfile.readlines()
 
-def login(USERNAME,PASSWORD):
-  Trying = True
-  while Trying:
-	  try:
-		  r.login(USERNAME, PASSWORD)
-		  success("LOGGED IN")
-		  Trying = False
-	  except praw.errors.InvalidUserPass:
-		  fail("WRONG USERNAME OR PASSWORD")
-		  exit()
-	  except Exception as e:
-	    traceback.print_exc()
-	    fail("%s"%e)
-	    time.sleep(5)
+### Login
+r = praw.Reddit("autowikibot by /u/acini at /r/autowikibot")
+USERNAME = datafile_lines[0].strip()
+PASSWORD = datafile_lines[1].strip()
+Trying = True
+while Trying:
+	try:
+		r.login(USERNAME, PASSWORD)
+		success("LOGGED IN")
+		Trying = False
+	except praw.errors.InvalidUserPass:
+		fail("WRONG USERNAME OR PASSWORD")
+		exit()
+	except Exception as e:
+	  fail("%s"%e)
+	  time.sleep(5)
+    
 
 def post_reply(reply,post):
   global totalposted
@@ -95,23 +80,22 @@ def post_reply(reply,post):
   except Exception as e:
     warn("REPLY FAILED: %s @ %s"%(e,post.subreddit))
     if str(e) == '403 Client Error: Forbidden':
+      badsubs = r.get_info(thing_id=badsubs_comment).body.split()
       badsubs.append(str(post.subreddit))
+      save_changing_variables()
     return False
 	    
 def filterpass(post):
   global summary_call
   global has_link
-  if post.id in already_done or (post.author.name == USERNAME) or post.author.name in banned_users:
+  if (post.author.name == USERNAME) or post.author.name in banned_users:
     return False
   summary_call = re.search("wikibot.*?wh.*?(\'s|is a |is an|is|are|was)",post.body.lower()) or re.search("wikibot.*?tell .*? about",post.body.lower()) or re.search("\?\-.*\-\?",post.body.lower())
   has_link = any(string in post.body for string in ['://en.wikipedia.org/wiki/', '://en.m.wikipedia.org/wiki/'])
   if has_link or summary_call:
-    already_done.append(post.id)
     if re.search(r"&gt;", post.body) and not summary_call:
-      already_done.append(post.id)
       return False
     elif re.search(r"wikipedia.org/wiki/.*wikipedia.org/wiki/", post.body, re.DOTALL):
-      already_done.append(post.id)
       return False
     elif str(post.subreddit) in badsubs:
       return False
@@ -156,9 +140,17 @@ def process_summary_call(post):
       pass
   elif re.search("\?\-.*\-\?",post.body.lower()):
     term = re.search("\?\-.*\-\?",post.body.lower()).group(0).strip('$').strip('-').strip()
-  
-  
+    
   log("TERM: %s"%filter(lambda x: x in string.printable, term))
+  if term.lower().strip() == 'love':
+    post_reply('*Baby don\'t hurt me! Now seriously, stop asking me about love so many times! O.o What were we discussing about in this thread again?*',post)
+    return(False,False)
+  if term.lower().strip() == 'wikibot':
+    post_reply('*Me! I know me.*',post)
+    return(False,False)
+  if term.lower().strip() == 'reddit':
+    post_reply('*This place. It feels like home.*',post)
+    return(False,False)
   if term.strip().__len__() < 2 or term == None:
     log("EMPTY TERM")
     return(False,False)
@@ -173,11 +165,11 @@ def process_summary_call(post):
 	if re.search('resulted in a redirect',str(e)):
 	  bit_comment_start = "*\"" + term.strip() + "\" redirects to* "
     else:
-      bit_comment_start = "*No Wikipedia article exists with heading \"" + term.strip() + "\". Closest match is* "
+      bit_comment_start = "*Couldn't find Wikipedia article titled \"" + term.strip() + "\". Closest match is* "
     if re.search(r'#',title):
       url = wikipedia.page(title.split('#')[0],auto_suggest=False).url
       sectionurl =  url + "#" + title.split('#')[1]
-      comment = "*Sorry, no Wikipedia article exists with the heading \"" + term.strip() + "\". But I found a relevant section ["+title.split('#')[1]+"]("+sectionurl.replace(')','\)')+") in article ["+title.split('#')[0]+"]("+url+") that might interest you.*\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(**Summon**: wikibot, what is something?)"
+      comment = "*Couldn't find Wikipedia article titled \"" + term.strip() + "\". But I found a relevant section ["+title.split('#')[1]+"]("+sectionurl.replace(')','\)')+") in article ["+title.split('#')[0]+"]("+url+") that might interest you.*\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(**Summon**: wikibot, what is something?)"
       post_reply(comment,post)
       log("RELEVANT SECTION SUGGESTED: %s"%filter(lambda x: x in string.printable, title))
       return (False,False)
@@ -202,7 +194,7 @@ def process_summary_call(post):
 	if suggesttitle.lower() == term:
 	  bit_comment_start = ""
 	else:
-	  bit_comment_start = "*Sorry, no Wikipedia article exists with the heading \"" + term.strip() + "\". Here\'s the closest match I could find for you from Wikipedia.*\n\n"
+	  bit_comment_start = "*Couldn't find Wikipedia article titled \"" + term.strip() + "\". Here\'s the closest match:*"
 	if str(suggesttitle).endswith(')') and not re.search('\(',str(suggesttitle)):
 	  suggesttitle = suggesttitle[0:--(suggesttitle.__len__()-1)]
 	return (str(suggesttitle),bit_comment_start)
@@ -211,7 +203,7 @@ def process_summary_call(post):
 	if trialtitle.lower() == term:
 	  bit_comment_start = ""
 	else:
-	  bit_comment_start = "*Sorry, no Wikipedia article exists with the heading \"" + term.strip() + "\". By long shot, the closest match I could find for you is this.*\n\n"
+	  bit_comment_start = "*Couldn't find Wikipedia article titled \"" + term.strip() + "\". By long shot, here's the closest match:*"
 	log("TRIAL SUGGESTION: %s"%filter(lambda x: x in string.printable, trialtitle))  
 	if str(trialtitle).endswith(')') and not re.search('\(',str(trialtitle)):
 	  trialtitle = trialtitle[0:--(trialtitle.__len__()-1)]
@@ -231,20 +223,6 @@ def clean_soup(soup):
   while soup.find("span", { "class" : "t_nihongo_help noprint" }):
     discard = soup.find("span", { "class" : "t_nihongo_help noprint" }).extract()
   return soup
-
-class MLStripper(HTMLParser):
-    def __init__(self):
-        self.reset()
-        self.fed = []
-    def handle_data(self, d):
-        self.fed.append(d)
-    def get_data(self):
-        return ''.join(self.fed)
-
-def strip_tags(html):
-    s = MLStripper()
-    s.feed(html)
-    return s.get_data()
 
 def reddify(html):
   html = html.replace('&lt;b&gt;', '**')
@@ -279,22 +257,28 @@ def process_brackets_syntax(string):
   string = ("%s\)"%string)
   return string
   
-
-  
 ### declare variables
 load_data()
-r = praw.Reddit("autowikibot by /u/acini at /r/autowikibot")
 im = pyimgur.Imgur(imgur_client_id)
 global pagepropsdata
-  
-### Login
-login(USERNAME,PASSWORD)
+lastload = int(float(time.strftime("%s")))
 
 while True:
   try:
     #comments = r.get_comments("all",limit = 1000)
     #for post in comments:
     for post in praw.helpers.comment_stream(r,'all', limit = None):
+      
+      ### Dirty timer hack
+      now = int(float(time.strftime("%s")))
+      diff = now - lastload
+      if diff > 899:
+	banned_users = r.get_info(thing_id=banned_users_comment).body.split()
+	success("BANNED USER LIST RENEWED")
+	save_changing_variables()
+	lastload = now
+      
+      
       if filterpass(post):
 	if has_link:
 	  url_string = get_url_string(post)
@@ -305,6 +289,8 @@ while True:
 	  try:
 	    url_string = ""
 	    url_string, bit_comment_start = process_summary_call(post)
+	    if url_string == False:
+	      continue
 	    url_string = str(url_string)
 	  except Exception as e:
 	    if bool(re.search('.*may refer to:.*',filter(lambda x: x in string.printable, str(e)))):
@@ -319,11 +305,10 @@ while True:
 	      continue
 	  if not url_string:
 	    continue
-
+	if url_string.endswith('))'):
+	  url_string = url_string.replace('))',')')
 	url_string_for_fetch = url_string.replace('_', '%20').replace("\\", "")
 	url_string_for_fetch = url_string_for_fetch.replace(' ', '%20').replace("\\", "")
-	if url_string_for_fetch.endswith('))'):
-	  url_string_for_fetch = url_string_for_fetch.replace('))',')')
 	article_name = url_string.replace('_', ' ')
 	
 	### In case user comments like "/wiki/Article.", remove last 1 letter
@@ -358,7 +343,7 @@ while True:
 	    page_url = page.url.replace(')','\)')
 	    section = section.replace('\n','\n\n>')
 	    success("TEXT PACKAGED")
-	    section = truncate(section,3500)
+	    section = truncate(section,1500)
 	    comment = ("*Here's the linked section ["+sectionname+"]("+link+") from Wikipedia article ["+page.title+"]("+page_url+")* : \n\n---\n\n>"+section+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^(**Summon**: wikibot, what is something?)")
 	    post_reply(comment,post)
 	  except Exception as e:
@@ -383,7 +368,6 @@ while True:
 	    article_name_terminal = article_name.replace('\\', '')
 	  except:
 	    article_name_terminal = article_name.replace('\\', '').decode('utf-8','ignore')
-	
 	
 	log("TOPIC: %s"%filter(lambda x: x in string.printable, article_name_terminal))
 	url = ("http://en.wikipedia.org/w/api.php?action=parse&page="+url_string_for_fetch+"&format=xml&prop=text&section=0&redirects")
@@ -489,7 +473,7 @@ while True:
 	  ### Upload to imgur
 	  uploaded_image = im.upload_image(url=image_url, title=page_image)
 	  
-	  ### Extract caption from already fetched sectiondata 
+	  ### Extract caption from already fetched sectiondata
 	  try:
 	    caption_div = section0soup.find("div", { "class" : "thumbcaption" })
 	    pic_markdown = "Picture"
@@ -539,22 +523,21 @@ while True:
 	      except:
 		continue
 	      topic = topic.replace(' ',' ^').replace(' ^(',' ^\(')
-	      interesting_list = interesting_list + " [^" + topic + "]" + "(" +topicurl+ ")^,"
-	    interesting_markdown = "^Interesting:"+interesting_list.strip('^,')
+	      interesting_list = interesting_list + " [^" + topic + "]" + "(" +topicurl+ ") ^|"
+	    interesting_markdown = "^Interesting:"+interesting_list.strip('^|')
 	    success("%s INTERESTING ARTICLE LINKS PACKAGED"%intlist.__len__())
 	  else:
 	    raise Exception("NO SUGGESTIONS")
 	except Exception as e:
 	  interesting_markdown = ""
-	  #traceback.print_exc()
+	  traceback.print_exc()
 	  log("INTERESTING ARTICLE LINKS NOT PACKAGED: %s"%str(e).strip().replace('\n',''))
 	
 	post_markdown = (bit_comment_start+" [***"+article_name_terminal+"***](http://en.wikipedia.org/wiki/"+url_string_for_fetch.replace(')','\)')+") : \n\n---\n\n>"+data+"\n\n>"+image_markdown+"\n\n---\n\n"+interesting_markdown+"\n\n"+image_source_markdown+"[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will delete if comment's score is -1 or less.)*  ^| ^(**Summon**: wikibot, what is something?) ^| [^(flag for glitch)](http://www.reddit.com/message/compose?to=/r/autowikibot&subject=bot%20glitch&message=%0Acontext:"+post.permalink+")")
 	a = post_reply(post_markdown,post)
 	if not a:
 	  continue
-	recieved_banned_users = list(shared.get('banned_users'))
-	banned_users = recieved_banned_users+banned_users
+	
 	banned_users = list(set(banned_users))
   except KeyboardInterrupt:
     save_changing_variables()
@@ -563,5 +546,6 @@ while True:
   except Exception as e: 
     traceback.print_exc()
     warn("GLOBAL: %s"%e)
+    time.sleep(3)
     continue
   
