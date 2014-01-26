@@ -81,6 +81,7 @@ def login(USERNAME,PASSWORD):
 		  fail("WRONG USERNAME OR PASSWORD")
 		  exit()
 	  except Exception as e:
+	    traceback.print_exc()
 	    fail("%s"%e)
 	    time.sleep(5)
 
@@ -379,6 +380,7 @@ while True:
 	  except:
 	    article_name_terminal = article_name.replace('\\', '').decode('utf-8','ignore')
 	
+	article_name_terminal = urllib.unquote(article_name_terminal)
 	log("TOPIC: %s"%filter(lambda x: x in string.printable, article_name_terminal))
 	url = ("http://en.wikipedia.org/w/api.php?action=parse&page="+url_string_for_fetch+"&format=xml&prop=text&section=0&redirects")
 	try:
