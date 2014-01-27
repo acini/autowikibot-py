@@ -274,9 +274,9 @@ lastload = int(float(time.strftime("%s")))
 
 while True:
   try:
-    #comments = r.get_comments("all",limit = 1000)
+    #comments = r.get_comments("privatesub",limit = 1000)
     #for post in comments:
-    for post in praw.helpers.comment_stream(r,'all', limit = None):
+    for post in praw.helpers.comment_stream(r,'privatesub', limit = None):
       
       ### Dirty timer hack
       now = int(float(time.strftime("%s")))
