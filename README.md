@@ -63,6 +63,4 @@ ce5gd56
 License
 =========
 
-This bot is licensed under [**Creative Commons Attribution-ShareAlike 3.0 Unported license**](http://creativecommons.org/licenses/by-sa/3.0/)
-
-Attribution: Include URL to this github page in your README (or similar) file, or at start of code.
+This bot is licensed under [GNU GPLv3](http://www.gnu.org/licenses/gpl-3.0.html)
