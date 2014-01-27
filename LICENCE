@@ -623,7 +623,7 @@ copy of the Program in return for a fee.
   A "Creator Instance" is a Reddit user account which is operated and
 maintained by original author of this source code and is used by the
 Program for processing and replying to comments. A subreddit where a Creator
-Instance has ability to submit comments to is referred as "Covered Subreddit".
+Instance has ability to submit comments to is referred to as "Covered Subreddit".
 The source code (modified or unmodified) cannot be used for submitting comments
 in Covered Subreddits when such comments serve the same purpose. The souce code
 (modified or unmodified) cannot be used for purpose of harassing operator/s of
