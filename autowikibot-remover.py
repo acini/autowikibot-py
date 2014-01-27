@@ -111,7 +111,7 @@ while True:
 	      bot_comment_id = msg.parent_id
 	      bot_comment = r.get_info(thing_id=bot_comment_id)
 	      bot_comment_parent = r.get_info(thing_id=bot_comment.parent_id)
-	      if bot_comment.author.name == USERNAME:
+	      if bot_comment.author.name == USERNAME or bot_comment.author.name == "acini":
 		if msg.author.name == bot_comment_parent.author.name or int(time.strftime("%s")) - int(c.created) > 86400:
 		  bot_comment.delete()
 		  deleted = deleted + 1
