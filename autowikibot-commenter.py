@@ -13,7 +13,7 @@ from HTMLParser import HTMLParser
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
-
+ab
 ###Load data
 def load_data():
   global banned_users
@@ -178,7 +178,7 @@ def process_summary_call(post):
     if re.search(r'#',title):
       url = wikipedia.page(title.split('#')[0],auto_suggest=False).url
       sectionurl =  url + "#" + title.split('#')[1]
-      comment = "*Couldn't find Wikipedia article titled \"" + term.strip() + "\". But I found a relevant section ["+title.split('#')[1]+"]("+sectionurl.replace(')','\)')+") in article ["+title.split('#')[0]+"]("+url+") that might interest you.*\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^[**Summon**](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/)"
+      comment = "*Couldn't find Wikipedia article titled \"" + term.strip() + "\". But I found a relevant section ["+title.split('#')[1]+"]("+sectionurl.replace(')','\)')+") in article ["+title.split('#')[0]+"]("+url+") that might interest you.*\n\n---\n\n[^(about)](http://) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^[**Summon**](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/)"
       post_reply(comment,post)
       log("RELEVANT SECTION SUGGESTED: %s"%filter(lambda x: x in string.printable, title))
       return (False,False)
@@ -192,7 +192,7 @@ def process_summary_call(post):
 	deflist = deflist + "\n\n>* " + wikipedia.summary(val,auto_suggest=False,sentences=1)
 	if idx > 1:
 	  break
-      summary = "*Oh, there's too many of \""+term.strip()+"\".*\n\n---"+deflist+"\n\n---\n\nOtherwise, "+str(e).replace('\n','\n\n>')+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^[**Summon**](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/)"
+      summary = "*Oh, there's too many of \""+term.strip()+"\".*\n\n---"+deflist+"\n\n---\n\nOtherwise, "+str(e).replace('\n','\n\n>')+"\n\n---\n\n[^(about)](http://) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^[**Summon**](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/)"
       log("ASKING FOR DISAMBIGUATION")
     else:
       log("INTERPRETATION FAIL: %s"%filter(lambda x: x in string.printable, term))
@@ -308,7 +308,7 @@ while True:
 		deflist = deflist + "\n\n>* " + wikipedia.summary(val,auto_suggest=True,sentences=1)
 		if idx > 1:
 		  break
-	      summary = "*Oh, there's too many of \""+url_string.strip()+"\".*\n\n---"+deflist+"\n\n---\n\nOtherwise, "+str(e).replace('\n','\n\n>')+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^[**Summon**](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/)"
+	      summary = "*Oh, there's too many of \""+url_string.strip()+"\".*\n\n---"+deflist+"\n\n---\n\nOtherwise, "+str(e).replace('\n','\n\n>')+"\n\n---\n\n[^(about)](http://) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^[**Summon**](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/)"
 	      log("ASKING FOR DISAMBIGUATION")
 	      post_reply(summary,post)
 	      continue
@@ -353,7 +353,7 @@ while True:
 	    section = section.replace('\n','\n\n>')
 	    success("TEXT PACKAGED")
 	    section = truncate(section,1500)
-	    comment = ("*Here's the linked section ["+sectionname+"]("+link+") from Wikipedia article ["+page.title+"]("+page_url+")* : \n\n---\n\n>"+section+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^[**Summon**](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/)")
+	    comment = ("*Here's the linked section ["+sectionname+"]("+link+") from Wikipedia article ["+page.title+"]("+page_url+")* : \n\n---\n\n>"+section+"\n\n---\n\n[^(about)](http://) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^[**Summon**](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/)")
 	    post_reply(comment,post)
 	  except Exception as e:
 	    #traceback.print_exc()
@@ -424,7 +424,7 @@ while True:
 		  summary = "Sorry, I failed to fetch the section, but here's the link: "+page_url+"#"+title.split('#')[1]
 	      if re.search(r'(',page_url):
 		page_url = process_brackets_links(page_url)
-	      comment = "*Here you go:*\n\n---\n\n>\n"+summary+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^[**Summon**](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/)"
+	      comment = "*Here you go:*\n\n---\n\n>\n"+summary+"\n\n---\n\n[^(about)](http://) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^[**Summon**](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/)"
 	      post_reply(comment,post)
 	      continue
 	    except Exception as e:
@@ -434,7 +434,7 @@ while True:
 		  deflist = deflist + "\n\n>* " + wikipedia.summary(val,auto_suggest=True,sentences=1)
 		  if idx > 1:
 		    break
-		comment = "*Oh, there's too many of \""+process_brackets_syntax(url_string).strip()+"\".*\n\n---"+deflist+"\n\n---\n\nOtherwise, "+str(e).replace('\n','\n\n>')+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^[**Summon**](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/)"
+		comment = "*Oh, there's too many of \""+process_brackets_syntax(url_string).strip()+"\".*\n\n---"+deflist+"\n\n---\n\nOtherwise, "+str(e).replace('\n','\n\n>')+"\n\n---\n\n[^(about)](http://) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^[**Summon**](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/)"
 		log("ASKING FOR DISAMBIGUATION")
 	      else:
 		log("INTERPRETATION FAIL: %s"%term)
@@ -442,10 +442,10 @@ while True:
 		  terms = "\""+term+"\""
 		  suggest = wikipedia.search(terms,results=1)[0]
 		  trialsummary = wikipedia.summary(suggest,auto_suggest=True)
-		  comment = "*No Wikipedia article exists for \""+term.trim()+"\"* **"+suggest+"** is the closest match I could find.\n\n---\n\n>"+trialsummary+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^[**Summon**](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/)"
+		  comment = "*No Wikipedia article exists for \""+term.trim()+"\"* **"+suggest+"** is the closest match I could find.\n\n---\n\n>"+trialsummary+"\n\n---\n\n[^(about)](http://) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^[**Summon**](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/)"
 		  log("SUGGESTING %s"%suggest)
 		except:
-		  comment = "*Sorry, couldn't find a wikipedia article about that or I had processing error due to overload on Wikipedia servers.*\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^[**Summon**](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/)"
+		  comment = "*Sorry, couldn't find a wikipedia article about that or I had processing error due to overload on Wikipedia servers.*\n\n---\n\n[^(about)](http://) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^[**Summon**](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/)"
 		  log("COULD NOT SUGGEST FOR %s"%term)
 		post_reply(comment,post)
 		continue
@@ -542,7 +542,7 @@ while True:
 	  traceback.print_exc()
 	  log("INTERESTING ARTICLE LINKS NOT PACKAGED: %s"%str(e).strip().replace('\n',''))
 	
-	post_markdown = (bit_comment_start+" [***"+article_name_terminal+"***](http://en.wikipedia.org/wiki/"+url_string_for_fetch.replace(')','\)')+") : \n\n---\n\n>"+data+"\n\n>"+image_markdown+"\n\n---\n\n"+interesting_markdown+"\n\n"+image_source_markdown+"[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will delete if comment's score is -1 or less.)*  ^| ^[**Summon**](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/) ^| [^(flag for glitch)](http://www.reddit.com/message/compose?to=/r/autowikibot&subject=bot%20glitch&message=%0Acontext:"+post.permalink+")")
+	post_markdown = (bit_comment_start+" [***"+article_name_terminal+"***](http://en.wikipedia.org/wiki/"+url_string_for_fetch.replace(')','\)')+") : \n\n---\n\n>"+data+"\n\n>"+image_markdown+"\n\n---\n\n"+interesting_markdown+"\n\n"+image_source_markdown+"[^(about)](http://) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will delete if comment's score is -1 or less.)*  ^| ^[**Summon**](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/) ^| [^(flag for glitch)](http://www.reddit.com/message/compose?to=/u/&subject=bot%20glitch&message=%0Acontext:"+post.permalink+")")
 	a = post_reply(post_markdown,post)
 	if not a:
 	  continue
