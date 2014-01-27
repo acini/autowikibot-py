@@ -189,7 +189,7 @@ def process_summary_call(post):
     if bool(re.search('.*may refer to:.*',filter(lambda x: x in string.printable, str(e)))):
       deflist = "\n\nI found 3 most common meanings for you:\n\n"
       for idx, val in enumerate(filter(lambda x: x in string.printable, str(e)).split('may refer to: \n')[1].split('\n')):
-	deflist = deflist + "\n\n>* " + wikipedia.summary(val,auto_suggest=True,sentences=1)
+	deflist = deflist + "\n\n>* " + wikipedia.summary(val,auto_suggest=False,sentences=1)
 	if idx > 1:
 	  break
       summary = "*Oh, there's too many of \""+term.strip()+"\".*\n\n---"+deflist+"\n\n---\n\nOtherwise, "+str(e).replace('\n','\n\n>')+"\n\n---\n\n[^(about)](http://www.reddit.com/r/autowikibot/wiki/index) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will also delete if comment's score is -1 or less.)*  ^| ^[**Summon**](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/)"
