@@ -63,4 +63,20 @@ ce5gd56
 License
 =========
 
-This bot is licensed under [GNU GPLv3](http://www.gnu.org/licenses/gpl-3.0.html)
+This source code is available under a modified version of GNU GPLv3. See the accompanying file LICENCE. 
+
+There is an extra clause to prevent abusive scenarios like [these](http://www.reddit.com/r/autowikibot/comments/1w9t4e/impostor_bot_uallinonebot_spamming_with_double/cezzfhc). It reads:
+
+````
+  18. Use of Source Code 
+
+  A "Creator Instance" is a Reddit user account which is operated and
+maintained by original author of this source code and is used by the
+Program for processing and replying to comments. A subreddit where a Creator
+Instance has ability to submit comments to is referred as "Covered Subreddit".
+The source code (modified or unmodified) cannot be used for submitting comments
+in Covered Subreddits when such comments serve the same purpose. The souce code
+(modified or unmodified) cannot be used for purpose of harassing operator/s of
+Creator Instance. This clause will override any other clauses in this licence
+if it conflicts them.
+````
