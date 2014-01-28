@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import praw, time, datetime, re, urllib, urllib2, pickle, pyimgur, os, traceback, wikipedia, string, socket
+#message /u/acini for nsfw library
 from nsfw import isnsfw
 from util import success, warn, log, fail, special, bluelog
 from bs4 import BeautifulSoup
