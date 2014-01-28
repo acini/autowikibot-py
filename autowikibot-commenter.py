@@ -546,6 +546,11 @@ while True:
 	  traceback.print_exc()
 	  log("INTERESTING ARTICLE LINKS NOT PACKAGED: %s"%str(e).strip().replace('\n',''))
 	
+	###NSFW tagging
+	for word in nsfw:
+	  if word in truncateddata:
+	    nsfwflag = True
+	
 	post_markdown = (bit_comment_start+" [***"+article_name_terminal+"***](http://en.wikipedia.org/wiki/"+url_string_for_fetch.replace(')','\)')+") : \n\n---\n\n>"+truncateddata+"\n\n>"+image_markdown+"\n\n---\n\n"+interesting_markdown+"\n\n"+image_source_markdown+"[^(about)](http://) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will delete if comment's score is -1 or less.)*  ^| ^[**Summon**](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/) ^| [^(flag for glitch)](http://www.reddit.com/message/compose?to=/u/&subject=bot%20glitch&message=%0Acontext:"+post.permalink+")")
 	a = post_reply(post_markdown,post)
 	if not a:
