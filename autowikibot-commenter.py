@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import praw, time, datetime, re, urllib, urllib2, pickle, pyimgur, os, traceback, wikipedia, string, socket
+import praw, time, datetime, re, urllib, urllib2, pickle, pyimgur, os, sys, traceback, wikipedia, string, socket
 #message /u/acini for nsfw library
 from nsfw import isnsfw
 from util import success, warn, log, fail, special, bluelog
@@ -281,7 +281,7 @@ while True:
   try:
     #comments = r.get_comments("privatesub",limit = 1000)
     #for post in comments:
-    for post in praw.helpers.comment_stream(r,'privatesub', limit = None):
+    for post in praw.helpers.comment_stream(r,str(sys.argv[1]), limit = None):
       
       ### Dirty timer hack
       now = int(float(time.strftime("%s")))
