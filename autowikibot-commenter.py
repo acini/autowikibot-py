@@ -455,7 +455,7 @@ while True:
 	  continue
 	data = strip_wiki(data)
 	data = re.sub("Cite error: There are ref tags on this page, but the references will not show without a \{\{reflist\}\} template \(see the help page\)\.", '', data)
-	data = truncate(data,1000)
+	truncateddata = truncate(data,1000)
 	if data.__len__() < 50:
 	  log("TOO SMALL INTRODUCTION PARAGRAPH")
 	  continue
@@ -545,7 +545,7 @@ while True:
 	  traceback.print_exc()
 	  log("INTERESTING ARTICLE LINKS NOT PACKAGED: %s"%str(e).strip().replace('\n',''))
 	
-	post_markdown = (bit_comment_start+" [***"+article_name_terminal+"***](http://en.wikipedia.org/wiki/"+url_string_for_fetch.replace(')','\)')+") : \n\n---\n\n>"+data+"\n\n>"+image_markdown+"\n\n---\n\n"+interesting_markdown+"\n\n"+image_source_markdown+"[^(about)](http://) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will delete if comment's score is -1 or less.)*  ^| ^[**Summon**](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/) ^| [^(flag for glitch)](http://www.reddit.com/message/compose?to=/u/&subject=bot%20glitch&message=%0Acontext:"+post.permalink+")")
+	post_markdown = (bit_comment_start+" [***"+article_name_terminal+"***](http://en.wikipedia.org/wiki/"+url_string_for_fetch.replace(')','\)')+") : \n\n---\n\n>"+truncateddata+"\n\n>"+image_markdown+"\n\n---\n\n"+interesting_markdown+"\n\n"+image_source_markdown+"[^(about)](http://) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will delete if comment's score is -1 or less.)*  ^| ^[**Summon**](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/) ^| [^(flag for glitch)](http://www.reddit.com/message/compose?to=/u/&subject=bot%20glitch&message=%0Acontext:"+post.permalink+")")
 	a = post_reply(post_markdown,post)
 	if not a:
 	  continue
