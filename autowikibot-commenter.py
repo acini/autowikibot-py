@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import praw, time, datetime, re, urllib, urllib2, pickle, pyimgur, os, traceback, wikipedia, string, socket
+from nsfw import isnsfw
 from util import success, warn, log, fail, special, bluelog
 from bs4 import BeautifulSoup
 from HTMLParser import HTMLParser
@@ -57,7 +58,6 @@ def save_changing_variables():
 
 with open ('datafile.inf', 'r') as myfile:
   datafile_lines=myfile.readlines()
-nsfw = [" "+line.strip()+" " for line in open('nsfw-words.list')]
 
 ### Login
 r = praw.Reddit("autowikibot by /u/acini at /r/autowikibot")
@@ -547,12 +547,9 @@ while True:
 	  log("INTERESTING ARTICLE LINKS NOT PACKAGED: %s"%str(e).strip().replace('\n',''))
 	
 	###NSFW tagging
-	nsfwflag = False
-	for word in nsfw:
-	  if word in truncateddata:
-	    nsfwflag = True
-	if nsfwflag:
-	bit_comment_start = "**(Possibly NSFW)** "+bit_comment_start
+	if isnsfw(truncateddata):
+	  bit_comment_start = "**(Possibly NSFW)** "+bit_comment_start
+	  success("NSFW TAG PACKAGED")
 	
 	post_markdown = (bit_comment_start+" [***"+article_name_terminal+"***](http://en.wikipedia.org/wiki/"+url_string_for_fetch.replace(')','\)')+") : \n\n---\n\n>"+truncateddata+"\n\n>"+image_markdown+"\n\n---\n\n"+interesting_markdown+"\n\n"+image_source_markdown+"[^(about)](http://) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will delete if comment's score is -1 or less.)*  ^| ^[**Summon**](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/) ^| [^(flag for glitch)](http://www.reddit.com/message/compose?to=/u/&subject=bot%20glitch&message=%0Acontext:"+post.permalink+")")
 	a = post_reply(post_markdown,post)
