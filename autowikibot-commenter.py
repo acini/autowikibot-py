@@ -57,6 +57,7 @@ def save_changing_variables():
 
 with open ('datafile.inf', 'r') as myfile:
   datafile_lines=myfile.readlines()
+nsfw = [" "+line.strip()+" " for line in open('nsfw-words.list')]
 
 ### Login
 r = praw.Reddit("autowikibot by /u/acini at /r/autowikibot")
