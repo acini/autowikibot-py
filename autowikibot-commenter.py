@@ -547,6 +547,7 @@ while True:
 	  log("INTERESTING ARTICLE LINKS NOT PACKAGED: %s"%str(e).strip().replace('\n',''))
 	
 	###NSFW tagging
+	nsfwflag = False
 	for word in nsfw:
 	  if word in truncateddata:
 	    nsfwflag = True
