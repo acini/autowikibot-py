@@ -84,6 +84,9 @@ def post_reply(reply,post):
     totalposted = totalposted + 1
     success("#%s REPLY SUCCESSFUL"%totalposted)
     return True
+  except praw.errors.RateLimitExceeded as error:
+  	warn('RL %d SEC' % error.sleep_time)
+  	time.sleep(error.sleep_time)
   except Exception as e:
     warn("REPLY FAILED: %s @ %s"%(e,post.subreddit))
     if str(e) == '403 Client Error: Forbidden':
