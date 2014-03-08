@@ -241,6 +241,8 @@ def clean_soup(soup):
 def reddify(html):
   html = html.replace('&lt;b&gt;', '**')
   html = html.replace('&lt;/b&gt;', '**')
+  html = html.replace('&lt;i&gt;', '_')
+  html = html.replace('&lt;/i&gt;', '_')
   html = re.sub('&lt;sup&gt;','^',html)
   html = re.sub('&lt;sup.*?&gt;','',html)
   html = html.replace('&lt;/sup&gt;','')
