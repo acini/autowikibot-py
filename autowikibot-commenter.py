@@ -246,9 +246,20 @@ def reddify(html):
   html = html.replace('**_', '___')
   html = html.replace('_**', '___')
   html = re.sub('&lt;sup&gt;','^',html)
-  html = re.sub('&lt;sup.*?&gt;','',html)
+  html = re.sub('&lt;sup.*?&gt;',' ',html)
   html = html.replace('&lt;/sup&gt;','')
-  return html
+  html = html.replace('&lt;dt&gt;','&lt;p&gt;')
+  html = html.replace('&lt;/dt&gt;','&lt;/p&gt;')
+  html = html.replace('&lt;ul&gt;','&lt;p&gt;')
+  html = html.replace('&lt;/ul&gt;','&lt;/p&gt;')
+  html = html.replace('&lt;ol&gt;','&lt;p&gt;')
+  html = html.replace('&lt;/ol&gt;','&lt;/p&gt;')
+  html = html.replace('&lt;dd&gt;','&lt;p&gt;>')
+  html = html.replace('&lt;/dd&gt;','&lt;/p&gt; ')
+  html = html.replace('&lt;li&gt;','&lt;p&gt;* ')
+  html = html.replace('&lt;/li&gt;','&lt;/p&gt;')
+  html = html.replace('&lt;blockquote&gt;','&lt;p&gt;>')
+  html = html.replace('&lt;/blockquote&gt;','&lt;/p&gt; ')
 
 def strip_wiki(wiki):
   wiki = re.sub('\[[0-9]\]','',wiki)
@@ -374,7 +385,7 @@ while True:
 	
 	### fetch data from wikipedia
 	
-	url = ("http://en.wikipedia.org/w/api.php?action=query&titles="+url_string_for_fetch+"&prop=pageprops&format=xml")
+	url = ("https://en.wikipedia.org/w/api.php?action=query&titles="+url_string_for_fetch+"&prop=pageprops&format=xml")
 	try:
 	  socket.setdefaulttimeout(30)
 	  pagepropsdata = urllib2.urlopen(url).read()
@@ -388,7 +399,7 @@ while True:
 	    article_name_terminal = article_name.replace('\\', '').decode('utf-8','ignore')
 	
 	log("TOPIC: %s"%filter(lambda x: x in string.printable, article_name_terminal))
-	url = ("http://en.wikipedia.org/w/api.php?action=parse&page="+url_string_for_fetch+"&format=xml&prop=text&section=0&redirects")
+	url = ("https://en.wikipedia.org/w/api.php?action=parse&page="+url_string_for_fetch+"&format=xml&prop=text&section=0&redirects")
 	try:
 	  socket.setdefaulttimeout(30)
 	  sectiondata = urllib2.urlopen(url).read()
@@ -477,7 +488,7 @@ while True:
 	    raise Exception("NO PAGE IMAGE")
 	  if page_image.endswith("ogg"):
 	    raise Exception("BAD IMAGE")
-	  url = ("http://en.wikipedia.org/w/api.php?action=query&titles=File:"+page_image+"&prop=imageinfo&iiprop=url|mediatype&iiurlwidth=640&format=xml")
+	  url = ("https://en.wikipedia.org/w/api.php?action=query&titles=File:"+page_image+"&prop=imageinfo&iiprop=url|mediatype&iiurlwidth=640&format=xml")
 	  socket.setdefaulttimeout(30)
 	  wi_api_data = urllib2.urlopen(url).read()
 	  wisoup = BeautifulSoup(wi_api_data)
@@ -520,7 +531,7 @@ while True:
 	      pic_markdown = "Related Picture"
 	    caption_markdown = ""
 	    log(e)
-	  image_markdown = ("[^(**"+pic_markdown+"**)]("+uploaded_image.link+")"+caption_markdown)
+	  image_markdown = ("[^(**"+pic_markdown+"**)]("+uploaded_image.link.replace('http://','https://')+")"+caption_markdown)
 	  success("IMAGE PACKAGED VIA %s"%uploaded_image.link)
 	except Exception as e:
 	  image_markdown = ""
@@ -541,7 +552,7 @@ while True:
 	      except:
 		continue
 	      topic = topic.replace(' ',' ^').replace(' ^(',' ^\(')
-	      interesting_list = interesting_list + " [^" + topic + "]" + "(" +topicurl+ ") ^|"
+	      interesting_list = interesting_list + " [^" + topic + "]" + "(" +topicurl.replace('http://','https://')+ ") ^|"
 	    interesting_markdown = "^Interesting:"+interesting_list.strip('^|')
 	    success("%s INTERESTING ARTICLE LINKS PACKAGED"%intlist.__len__())
 	  else:
@@ -556,7 +567,7 @@ while True:
 	  bit_comment_start = "**(Possibly NSFW)** "+bit_comment_start
 	  success("NSFW TAG PACKAGED")
 	
-	post_markdown = (bit_comment_start+" [***"+article_name_terminal+"***](http://en.wikipedia.org/wiki/"+url_string_for_fetch.replace(')','\)')+") : \n\n---\n\n>"+truncateddata+"\n\n>"+image_markdown+"\n\n---\n\n"+interesting_markdown+"\n\n"+image_source_markdown+"[^(about)](http://) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will delete if comment's score is -1 or less.)*  ^| ^[**Summon**](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/) ^| [^(flag for glitch)](http://www.reddit.com/message/compose?to=/u/&subject=bot%20glitch&message=%0Acontext:"+post.permalink+")")
+	post_markdown = (bit_comment_start+" [***"+article_name_terminal+"***](https://en.wikipedia.org/wiki/"+url_string_for_fetch.replace(')','\)')+") : \n\n---\n\n>"+truncateddata+"\n\n>"+image_markdown+"\n\n---\n\n"+interesting_markdown+"\n\n"+image_source_markdown+"[^(about)](http://) ^| *^(/u/"+post.author.name+" can reply with 'delete'. Will delete if comment's score is -1 or less.)*  ^| ^[**Summon**](http://www.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/) ^| [^(flag for glitch)](http://www.reddit.com/message/compose?to=/u/&subject=bot%20glitch&message=%0Acontext:"+post.permalink+")")
 	a = post_reply(post_markdown,post)
 	if not a:
 	  continue
