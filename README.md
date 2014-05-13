@@ -1,5 +1,3 @@
-*Note: Newer source code updates are pending in this repo. Latest source code of running instance of this bot can be requested by messaging /u/acini on reddit.*
-
 AutoWikibot
 ===========
 
