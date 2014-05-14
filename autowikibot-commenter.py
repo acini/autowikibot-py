@@ -75,7 +75,7 @@ with open ('datafile.inf', 'r') as myfile:
   datafile_lines=myfile.readlines()
 
 ### Login
-r = praw.Reddit("#awbc instance")
+r = praw.Reddit("autowikibot by /u/acini at /r/autowikibot")
 USERNAME = datafile_lines[0].strip()
 PASSWORD = datafile_lines[1].strip()
 Trying = True
@@ -135,7 +135,7 @@ def post_reply(reply,post):
   global totalposted
   try:
     reply = "#####&#009;\n\n######&#009;\n\n####&#009;\n"+reply+"^Parent ^commenter ^can [^toggle ^NSFW](http://www.np.reddit.com/message/compose?to=autowikibot&subject=AutoWikibot NSFW toggle&message=%2Btoggle-nsfw+____id____) ^or[](#or) [^delete](http://www.np.reddit.com/message/compose?to=autowikibot&subject=AutoWikibot Deletion&message=%2Bdelete+____id____)^. ^Will ^also ^delete ^on ^comment ^score ^of ^-1 ^or ^less. ^| [^(FAQs)](http://www.np.reddit.com/r/autowikibot/wiki/index) ^| [^Mods](http://www.np.reddit.com/r/autowikibot/comments/1x013o/for_moderators_switches_commands_and_css/) ^| [^Magic ^Words](http://www.np.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/)"
-    a = post.reply('Comment is being processed... If this text stays for more than 1 minute, please [flag it](http://www.np.reddit.com/message/compose?to=acini&subject=ProcessorHalted&message=context:'+post.permalink+').')
+    a = post.reply('[#placeholder-awb]Comment is being processed... It will be automatically replaced by new text within a minute or will be deleted if that fails.')
     postsuccess = r.get_info(thing_id='t1_'+str(a.id)).edit(reply.replace('____id____',str(a.id)))
     if not postsuccess:
       raise Exception ('reply unsuccessful')
