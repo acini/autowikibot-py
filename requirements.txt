@@ -1,0 +1,4 @@
+praw
+pyimgur
+beautifulsoup4
+wikipedia
