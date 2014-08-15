@@ -22,10 +22,10 @@ Requirements
 ============
 
 Tested in Python 2.7.6
-* `pip install praw`
-* `pip install pyimgur`
-* `pip install beautifulsoup4`
-* `pip install wikipedia`
+
+To install the required dependencies from PyPI, run `pip install -r requirements.txt` 
+from the command line. This will install the `praw`, `pyimgur`, `beautifulsoup4`, 
+`wikipedia` modules.
 
 
 Configuration
