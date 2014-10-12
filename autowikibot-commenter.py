@@ -134,7 +134,7 @@ def post_reply(reply,post):
   global submissioncount
   global totalposted
   try:
-    reply = "#####&#009;\n\n######&#009;\n\n####&#009;\n"+reply+"^Parent ^commenter ^can [^toggle ^NSFW](http://www.np.reddit.com/message/compose?to=autowikibot&subject=AutoWikibot NSFW toggle&message=%2Btoggle-nsfw+____id____) ^or[](#or) [^delete](http://www.np.reddit.com/message/compose?to=autowikibot&subject=AutoWikibot Deletion&message=%2Bdelete+____id____)^. ^Will ^also ^delete ^on ^comment ^score ^of ^-1 ^or ^less. ^| [^(FAQs)](http://www.np.reddit.com/r/autowikibot/wiki/index) ^| [^Mods](http://www.np.reddit.com/r/autowikibot/comments/1x013o/for_moderators_switches_commands_and_css/) ^| [^Magic ^Words](http://www.np.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/)"
+    reply = "#####&#009;\n\n######&#009;\n\n####&#009;\n"+reply+"^Parent ^commenter ^can [^toggle ^NSFW](/message/compose?to=autowikibot&subject=AutoWikibot NSFW toggle&message=%2Btoggle-nsfw+____id____) ^or[](#or) [^delete](/message/compose?to=autowikibot&subject=AutoWikibot Deletion&message=%2Bdelete+____id____)^. ^Will ^also ^delete ^on ^comment ^score ^of ^-1 ^or ^less. ^| [^(FAQs)](http://www.np.reddit.com/r/autowikibot/wiki/index) ^| [^Mods](http://www.np.reddit.com/r/autowikibot/comments/1x013o/for_moderators_switches_commands_and_css/) ^| [^Magic ^Words](http://www.np.reddit.com/r/autowikibot/comments/1ux484/ask_wikibot/)"
     a = post.reply('[#placeholder-awb]Comment is being processed... It will be automatically replaced by new text within a minute or will be deleted if that fails.')
     postsuccess = r.get_info(thing_id='t1_'+str(a.id)).edit(reply.replace('____id____',str(a.id)))
     if not postsuccess:
@@ -466,7 +466,7 @@ while True:
 		r.submit('acini',title,text=subtext)
 	    else:
 	      if post.subreddit not in badsubs:
-		comment = "*Moderator switches can only be switched ON and OFF by moderators of this subreddit.*\n\n*If you want specific feature turned ON or OFF, [ask the moderators](http://www.np.reddit.com/message/compose?to=%2Fr%2F"+str(post.subreddit)+") and provide them with [this link](http://www.np.reddit.com/r/autowikibot/wiki/modfaqs).*\n\n---\n\n"
+		comment = "*Moderator switches can only be switched ON and OFF by moderators of this subreddit.*\n\n*If you want specific feature turned ON or OFF, [ask the moderators](/message/compose?to=%2Fr%2F"+str(post.subreddit)+") and provide them with [this link](http://www.np.reddit.com/r/autowikibot/wiki/modfaqs).*\n\n---\n\n"
 		post_reply(comment,post)
 	  except Exception as e:
 	    title = "MODSWITCH FAILURE !!: %s"%str(post.subreddit)
@@ -811,7 +811,7 @@ while True:
 	  badlist = ''
 	  for word in badwords:
 	    badlist = badlist + word + ',%20'
-	  nsfwurl = "http://www.np.reddit.com/message/compose?to=%28This%20is%20a%20placeholder%29/r/autowikibot&subject="+str(len(badwords))+"%20NSFW%20words%20are%20present%20in%20this%20comment:&message="+badlist.strip(',%20')+"%0a%0aIf%20you%20think%20any%20of%20word/s%20above%20is%20SFW,%20forward%20this%20message%20to%20/r/autowikibot%20%28keep%20the%20subject%20unchanged%29%0a%0acontext:"+str(post.permalink)
+	  nsfwurl = "/message/compose?to=%28This%20is%20a%20placeholder%29/r/autowikibot&subject="+str(len(badwords))+"%20NSFW%20words%20are%20present%20in%20this%20comment:&message="+badlist.strip(',%20')+"%0a%0aIf%20you%20think%20any%20of%20word/s%20above%20is%20SFW,%20forward%20this%20message%20to%20/r/autowikibot%20%28keep%20the%20subject%20unchanged%29%0a%0acontext:"+str(post.permalink)
 	  nsfwtag = " [](#nsfw-start)**^NSFW** [^^(?)]("+nsfwurl+")[](#nsfw-end)"
 	  #success("FOUND %s NSFW WORDS"%str(len(badwords)))
 	else:
