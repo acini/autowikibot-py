@@ -145,7 +145,7 @@ def post_reply(reply,post):
     return True
   except Exception as e:
     warn("REPLY FAILED: %s @ %s"%(e,post.subreddit))
-    if str(e) == '(TOO_LONG) `this is too long (max: 15000.0)` on field `text`':
+    if str(e).find('TOO_LONG') > -1:
       a.delete()
     elif str(e) == '403 Client Error: Forbidden' and str(post.subreddit) not in badsubs:
       badsubs = badsubs_page.content_md.strip().split()
